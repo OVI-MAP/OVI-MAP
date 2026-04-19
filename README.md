@@ -8,11 +8,11 @@
     <a href="https://scholar.google.com/citations?user=dfjN3YAAAAAJ">Johanna Wald</a><sup>2</sup>,
     <a href="https://scholar.google.com/citations?user=U9-D8DYAAAAJ">Daniel Barath</a><sup>1,2</sup>,
     <br>
-    <sup>1</sup>ETH Zurich,
-    <sup>2</sup>Google,
-    <sup>3</sup>Univeristy of Zurich
-    <sup>3</sup>TU Munich,
-    <sup>4</sup>Microsoft
+    <sup>1</sup>ETH Zurich&emsp;
+    <sup>2</sup>Google&emsp;
+    <sup>3</sup>Univeristy of Zurich&emsp;
+    <sup>4</sup>TU Munich&emsp;
+    <sup>5</sup>Microsoft
   </p>
   <h3 align="center"><a href="https://arxiv.org/abs/2603.26541">Paper</a> | <a href="https://ovi-map.github.io/">Project Page</a> </h3>
   <div align="center"></div>
@@ -22,8 +22,7 @@ This is the official implementation of the CVPR2026 paper **OVI-MAP**.
 
 ### BibTex
 
-<pre><code>
-@misc{deng2026ovimap,
+<pre><code>@misc{deng2026ovimap,
   title={OVI-MAP:Open-Vocabulary Instance-Semantic Mapping}, 
   author={Zilong Deng and Federico Tombari and Marc Pollefeys and Johanna Wald and Daniel Barath},
   year={2026},
@@ -37,7 +36,7 @@ This is the official implementation of the CVPR2026 paper **OVI-MAP**.
 ## Installation
 
 We will release the code for reproducing the reslut in our paper and a refactored codebase for real-time usage soon.
-Welcome to leave your comments on our paper via issues.
+Welcome to leave your comments on our paper via the issues.
 
 ### Timeline
 - [ ] Before 2026.06.01: Release original code & interactive visualization tools
