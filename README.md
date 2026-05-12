@@ -34,13 +34,13 @@ This is the official implementation of the CVPR2026 paper **OVI-MAP**.
 }
 </code></pre>
 
-## Installation
-
 ### Timeline
 
-- [x] 2026/05/13: Release original code & interactive visualization tools
+- [x] 2026/05/13: Release original code & interactive visualization tools (there might be some bugs for fresh start. I am still working on it, thanks for your patience :))
 - [ ] Before 2026/06/01: Bug fixing and cleaning the codebase
 - [ ] Before 2026/07/01: Release the refactored codebase for easier installation and deployment.
+
+## Installation
 
 ### Download the Repo
 
