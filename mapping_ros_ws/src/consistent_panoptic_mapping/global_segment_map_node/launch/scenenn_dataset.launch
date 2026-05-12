@@ -1,0 +1,18 @@
+<launch>
+  <arg name="play_bag" default="true" />
+  <arg name="bag_file" default="/path/to/data.bag"/>
+  <arg name="visualize" default="false" />
+
+
+  <!-- Download the dataset here: https://projects.asl.ethz.ch/datasets/doku.php?id=voxblox-plusplus -->
+  <arg name="log_folder" default="./ros/" />
+  <include file="$(find gsm_node)/launch/vpp_pipeline.launch">
+    <arg name="scene_name" value="scenenn" />
+    <arg name="sensor_name" value="primesense" />
+    <arg name="visualize" value="$(arg visualize)" />
+    <arg name="log_folder" default="$(arg log_folder)" />
+  </include>
+
+  <node name="bag" pkg="rosbag" type="play" output="screen" args="--delay 5 -r 0.5 $(arg bag_file)" if="$(arg play_bag)" required="true">
+  </node>
+</launch>

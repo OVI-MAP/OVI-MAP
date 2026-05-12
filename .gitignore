@@ -1,0 +1,33 @@
+# ros
+**/devel
+**/logs
+**/build
+**/bin
+**/lib
+**/.catkin_tools
+
+# vscode
+**/.vscode
+
+# python
+**/__pycache__
+*.pyc
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# test
+**/test
+
+# checkpoints 
+**/checkpoints
+
+#vscode 
+**/.vscode
+
+*.pt
+
+

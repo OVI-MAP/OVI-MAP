@@ -1,0 +1,25 @@
+<launch>
+  <arg name="play_bag" default="true" />
+  <arg name="bag_file" default="/path/to/data.bag"/>
+  <arg name="visualize" default="true" />
+
+  <!-- Download the dataset here: https://projects.asl.ethz.ch/datasets/doku.php?id=voxblox-plusplus -->
+
+  <include file="$(find gsm_node)/launch/vpp_pipeline.launch">
+    <arg name="scene_name" value="asl_office_floor" />
+    <arg name="sensor_name" value="primesense" />
+    <arg name="visualize" value="$(arg visualize)" />
+  </include>
+
+  <node name="bag" pkg="rosbag" type="play" output="screen" args="--delay 5 -r 0.4 $(arg bag_file)" if="$(arg play_bag)">
+    <remap from="/ps_front/rgb/image_raw" to="/camera/rgb/image_raw" />
+    <remap from="/ps_front/rgb/camera_info" to="/camera/rgb/camera_info" />
+    <remap from="/ps_front/depth_registered/image_raw" to="/camera/depth/image_raw" />
+    <remap from="/ps_front/depth_registered/camera_info" to="/camera/depth/camera_info" />
+    <remap from="/ps_table/rgb/image_raw" to="/camera/rgb/image_raw" />
+    <remap from="/ps_table/rgb/camera_info" to="/camera/rgb/camera_info" />
+    <remap from="/ps_table/depth_registered/image_raw" to="/camera/depth/image_raw" />
+    <remap from="/ps_table/depth_registered/camera_info" to="/camera/depth/camera_info" />
+  </node>
+
+</launch>
