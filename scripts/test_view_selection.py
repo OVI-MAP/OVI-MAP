@@ -16,7 +16,7 @@ from utils.data_loaders import ScannetLoader, ReplicaLoader, SceneNNLoader
 
 from vl_models import VLModel
 from plyfile import PlyData
-from scripts.utils.vis_utils import get_new_pallete
+from scripts.visualizations.vis_utils import get_new_pallete
 
 from panoptic_mapping_ import update_view_cov_map, make_res_dirs
 

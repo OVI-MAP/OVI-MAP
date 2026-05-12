@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 import semantics.semantic_utils as semantic_utils
 from utils.common_utils import Segment, PointCloudProcessor
 from utils.data_loaders import ScannetLoader, ReplicaLoader, SceneNNLoader
-from utils.vis_utils import vis_id_map, vis_normal_map
+from scripts.visualizations.vis_utils import vis_id_map, vis_normal_map
 
 from vl_models import VLModel
 
@@ -334,7 +334,6 @@ def main(args):
 
     # ==========================================================
     # TODO set flag for complete open-set segmentation
-    use_openset_segs = True
     VLM_name = 'siglip-l-16-384'
     exp_results = pjoin(result_dirs['folder'], 'cropformer_inst_combine')
     temp_feats = pjoin(result_dirs['folder'], 'cropformer_inst', 'temp_feats')
@@ -344,25 +343,18 @@ def main(args):
     select_by_vis = False
     select_by_viewcov = False
     select_combine = True
-    select_by_normal = False
 
     # incre_vis | 
     inst_sem_name = f'inst_sem_{VLM_name}_{int(np.ceil((end-start)/step))}_incre_combine.pkl'
 
-    # glo_2d_map_dir = pjoin(temp_pano_folder, 'glo_2d_map')
-    # glo_2d_map_vis = pjoin(temp_pano_folder, 'glo_2d_map_vis')
-    # normal_dir = pjoin(temp_pano_folder, 'normal')
     # ==========================================================
 
     if not os.path.exists(exp_results):
         os.makedirs(exp_results)
     if not os.path.exists(temp_feats):
         os.makedirs(temp_feats)
-    # os.makedirs(glo_2d_map_dir, exist_ok=True)
-    # os.makedirs(glo_2d_map_vis, exist_ok=True)
-    # os.makedirs(normal_dir, exist_ok=True)
 
-    if use_openset_segs or use_temp_results:
+    if use_temp_results:
         logging.info("Using pre-processed instance seg data!")
         panoptic_node = None
         if not use_geos:
@@ -383,40 +375,31 @@ def main(args):
         save_geometrics=save_geos, geometrics_folder=temp_geos_folder
     )
 
-    if use_openset_segs:
-        # Create the VL model for language-aligned image feature extraction
-        vl_model = VLModel(model_name=VLM_name, img_size=(H_depth, W_depth), device=DEVICE)
-        logging.info(f"VL model {VLM_name} initialized!")
+    # Create the VL model for language-aligned image feature extraction
+    vl_model = VLModel(model_name=VLM_name, img_size=(H_depth, W_depth), device=DEVICE)
+    logging.info(f"VL model {VLM_name} initialized!")
 
-        new_view_angle_thres = np.deg2rad(4)
-        # similar_view_angle_thres = np.deg2rad(10)
+    new_view_angle_thres = np.deg2rad(4)
+    # similar_view_angle_thres = np.deg2rad(10)
 
-        ray_cast_max_depth = 50.0
+    ray_cast_max_depth = 50.0
 
-        # minimum visible area in the pano seg for an instance to be considered
-        vis_area_thres = 1000
-        max_top_vis = 8
-        if select_by_viewcov:
-            view_overlap_ratio_thres = 0.85
-        elif select_combine:
-            view_overlap_ratio_thres = 0.9
-        elif select_by_normal:
-            yx_grid = np.mgrid[0:H_depth, 0:W_depth] # (2, H, W)
-            fx = K_depth[0,0]
-            fy = K_depth[1,1]
-            cx = K_depth[0,2]
-            cy = K_depth[1,2]
-            pixel_dirs = np.stack([(yx_grid[1] - cx) / fx, (yx_grid[0] - cy) / fy, np.ones((H_depth, W_depth))], axis=-1)  # (H, W, 3)
-            pixel_dirs = pixel_dirs / np.linalg.norm(pixel_dirs, axis=-1, keepdims=True)
+    # minimum visible area in the pano seg for an instance to be considered
+    vis_area_thres = 1000
+    max_top_vis = 8
+    if select_by_viewcov:
+        view_overlap_ratio_thres = 0.85
+    elif select_combine:
+        view_overlap_ratio_thres = 0.9
 
-        gsm_node.initializeCameraRayCaster(
-            K_depth, H_depth, W_depth, 0.01, ray_cast_max_depth, num_threads
-        )
+    gsm_node.initializeCameraRayCaster(
+        K_depth, H_depth, W_depth, 0.01, ray_cast_max_depth, num_threads
+    )
 
-        inst_dict = {}
-        yx_grid = np.mgrid[0:H_depth, 0:W_depth] # (2, H, W)
-        sph_grid_size = (int(H_depth/8), int(W_depth/8))
-        theta_phi_grid = np.mgrid[0:sph_grid_size[0], 0:sph_grid_size[1]]
+    inst_dict = {}
+    yx_grid = np.mgrid[0:H_depth, 0:W_depth] # (2, H, W)
+    sph_grid_size = (int(H_depth/8), int(W_depth/8))
+    theta_phi_grid = np.mgrid[0:sph_grid_size[0], 0:sph_grid_size[1]]
 
 
     
@@ -435,89 +418,46 @@ def main(args):
         rgb_img = cv2.cvtColor(rgb_img, cv2.COLOR_BGR2RGB)
         valid_d_mask = (depth_scaled > 0.0) & (depth_scaled < ray_cast_max_depth)
         
-        if not use_openset_segs:
-            if not use_temp_results: # generate depth segmentations 
-                t0 = time.time()
-                segment_list: list[Segment] = segments_generator.frameToSegments(
-                    depth_scaled, rgb_img, pose, f_i)
-                logging.info(f"Segment in python cost {time.time() - t0:.2f} s.")
-                continue
-            else: # load from storage
-                # read segments from h5 file and get p3d from depth
-                segment_list: list[Segment] = segments_generator.loadSegments(
-                    depth_scaled, K_depth, f_i)
-            
-            if len(segment_list) == 0:
-                logging.warning(f"[Skip] No segment found in frame-{f_i}.")
-                continue
-    
-            for segment in segment_list:
-                if segment.points.shape[0] < 1:
-                    continue
-                if(seg_graph_confidence == 3 and segment.is_thing):
-                    segment.calculateBBox()
-                
-                gsm_node.insertSegments(
-                    segment.points, segment.box_points, 
-                    segment.instance_label, segment.class_label, 
-                    segment.inst_confidence, segment.overlap_ratio, 
-                    segment.pose, segment.is_thing, segment.segment_label
-                )
 
-        else:
-            # use gt mask and semantic, then convert them to clip embedding or one-hot encoding
-            # # NOTE use both gt inst map and gt sem map
-            # gt_sem_segs = data_loader.getGTSemanticFromIndex(f_i)
-            # gt_sem_segs = data_loader.mapRGBtoDepth(gt_sem_segs)
-            # gt_inst_segs = data_loader.getGTInstanceFromIndex(f_i)
-            # gt_inst_segs = data_loader.mapRGBtoDepth(gt_inst_segs)
-            # segment_list: list[Segment] = segments_generator.gtInstSemSegToSegments(
-            #     depth_scaled, K_depth, pose, f_i, gt_sem_segs, gt_inst_segs, text_embed_NYU41
-            # )
+        # NOTE use instance segs from cropformer
+        inst_seg_f = pjoin(temp_pano_folder, 'cropformer', 
+            os.path.basename(data_loader.rgb_path_map[f_i]).split('.')[0] + '.png'
+        )
+        inst_seg = cv2.imread(inst_seg_f, cv2.IMREAD_UNCHANGED)
+        if data_loader.mapRGBtoDepth is not None:
+            inst_seg = data_loader.mapRGBtoDepth(inst_seg)
 
-            # NOTE use instance segs from cropformer
-            inst_seg_f = pjoin(temp_pano_folder, 'cropformer', 
-                os.path.basename(data_loader.rgb_path_map[f_i]).split('.')[0] + '.png'
+        # pybind11 only accepts not unsigned int
+        inst_seg = inst_seg.astype(np.int32)
+
+        # perform depth segmentation first
+        if dep_segmentor is not None:
+            segments_generator.SegmentDepth(depth_scaled, rgb_img, f_i)
+
+        segment_list: list[Segment] = segments_generator.frameToSegmentsCropFormer(
+            depth_scaled, K_depth, pose, f_i, inst_seg
+        )
+
+        if len(segment_list) == 0:
+            logging.warning(f"[Skip] No segment found in frame {f_i}")
+            continue
+        
+        for segment in segment_list:
+            if(seg_graph_confidence == 3):
+                segment.calculateBBox()
+
+            # all segs except bg are 'thing' and with a 1.0 inst_conf
+            gsm_node.insertSegmentsOpen(
+                segment.points, segment.box_points, 
+                segment.instance_label, segment.class_label, 
+                segment.sem_feat, 
+                segment.inst_confidence, segment.overlap_ratio, 
+                pose, segment.is_thing, segment.segment_label
             )
-            inst_seg = cv2.imread(inst_seg_f, cv2.IMREAD_UNCHANGED)
-            if data_loader.mapRGBtoDepth is not None:
-                inst_seg = data_loader.mapRGBtoDepth(inst_seg)
-
-            # vis_id_map(inst_seg, f'/home/zilong/Downloads/inst_{f_i}.png')
-            # pybind11 only accepts not unsigned int
-            inst_seg = inst_seg.astype(np.int32)
-
-            # perform depth segmentation first
-            if dep_segmentor is not None:
-                segments_generator.SegmentDepth(depth_scaled, rgb_img, f_i)
-
-            segment_list: list[Segment] = segments_generator.frameToSegmentsCropFormer(
-                depth_scaled, K_depth, pose, f_i, inst_seg
-            )
-
-            if len(segment_list) == 0:
-                logging.warning(f"[Skip] No segment found in frame {f_i}")
-                continue
-            
-            for segment in segment_list:
-                if(seg_graph_confidence == 3):
-                    segment.calculateBBox()
-
-                # all segs except bg are 'thing' and with a 1.0 inst_conf
-                gsm_node.insertSegmentsOpen(
-                    segment.points, segment.box_points, 
-                    segment.instance_label, segment.class_label, 
-                    segment.sem_feat, 
-                    segment.inst_confidence, segment.overlap_ratio, 
-                    pose, segment.is_thing, segment.segment_label
-                )
     
         # Run the algorithm
         gsm_node.integrateFrame()
 
-        if not use_openset_segs:
-            gsm_node.clearTemporaryMemory()
-            continue
 
         # Ray casting to get the global instance map from the super points
         glo_inst_map = gsm_node.raycastInstancePredictions(
@@ -534,20 +474,6 @@ def main(args):
         if not select_by_vis:
             depth_scaled[~valid_d_mask] = 0.0
             points_map = cv2.rgbd.depthTo3d(depth_scaled, K_depth)
-
-        if select_by_normal:
-            pcd = o3d.geometry.PointCloud(
-                o3d.utility.Vector3dVector(points_map.reshape(-1, 3))
-            )
-            pcd.estimate_normals(
-                search_param=o3d.geometry.KDTreeSearchParamKNN(knn=30)
-            )
-            pcd.orient_normals_towards_camera_location()
-            pcd.normalize_normals()
-            # o3d.visualization.draw_geometries([pcd])
-            normal_map = np.asarray(pcd.normals).reshape(H_depth, W_depth, 3)
-            normal_map[~valid_d_mask] = 0.0
-            # vis_normal_map(normal_map, f'{normal_dir}/{f_i}.png')
 
         # ################# View Selection #################
         observed_inst_ids = np.unique(glo_inst_map)
@@ -656,23 +582,6 @@ def main(args):
                     top_vis_s = np.sort(np.array(cur_inst_info['vis_area']))[-max_top_vis:]
                     if overlap_area <= np.min(top_vis_s):
                         continue # not visible enough
-            elif select_by_normal:
-                overlap_mask = np.logical_and(overlap_mask, valid_d_mask)
-                angles = (normal_map * -pixel_dirs).sum(axis=-1) # both towards the camera
-                # plt.imshow(angles)
-                # plt.show()
-                angles = angles[overlap_mask]
-
-                angles = np.arccos(np.clip(angles, -1.0, 1.0)) # [0, pi]
-                angles[angles < np.pi/4] = 0.0 # consider as fronto-parallel
-                score_angle = 1.0 - angles/np.pi  # [0, 1], smaller angle gets higher score
-                overlap_area = score_angle.sum()
-
-                past_vis_areas = cur_inst_info['vis_area']
-                if len(past_vis_areas) >= max_top_vis:
-                    top_vis_s = np.sort(np.array(cur_inst_info['vis_area']))[-max_top_vis:]
-                    if overlap_area <= np.min(top_vis_s):
-                        continue # not visible enough
 
 
             inst_dict[glo_inst_id] = cur_inst_info
@@ -723,10 +632,6 @@ def main(args):
         False, False, True
     )
 
-    if not use_openset_segs:
-        return
-    
-
     np.random.seed(0)
 
     # sum up the instance features and save them
@@ -750,7 +655,7 @@ def main(args):
             occ_cnt = np.count_nonzero(view_map > 0)
             occ_ratio = occ_cnt / (sph_grid_size[0] * sph_grid_size[1])
             gsm_node.outputLog(f"Instance {glo_inst_id} has {occ_ratio*100:.2f}% observed from {obs_num} frames")
-        elif select_by_vis or select_combine or select_by_normal:
+        elif select_by_vis or select_combine:
             # select the top-k with max vis area
             top_indices = np.argsort(vis_scores)[-max_top_vis:] # indices for values sorted in ascending order
             all_feats = all_feats[top_indices]
@@ -758,21 +663,11 @@ def main(args):
             inst_poses = [inst_poses[i] for i in top_indices]
             inst_bbox2ds = [inst_bbox2ds[i] for i in top_indices]
             vis_scores = vis_scores[top_indices]
-
-            # # ================= select randomly 8 views =================
-            # if obs_num > 8:
-            #     rand_indices = np.random.choice(obs_num, 8, replace=False)
-            #     all_feats = all_feats[rand_indices]
-            #     inst_frames = [inst_frames[i] for i in rand_indices]
-            #     inst_poses = [inst_poses[i] for i in rand_indices]
-            #     inst_bbox2ds = [inst_bbox2ds[i] for i in rand_indices]
-            #     vis_scores = vis_scores[rand_indices]
         
-        # feat_inst = np.mean(all_feats, axis=0)
         inst_color = gsm_node.getInstanceColor(glo_inst_id)
 
         inst_sem_dict[glo_inst_id] = {
-            'feat': all_feats, #feat_inst,
+            'feat': all_feats,
             'vis_area': vis_scores,
             'frame_id': inst_frames,
             'pose': inst_poses,

@@ -5,24 +5,6 @@ import open3d as o3d
 
 import matplotlib.pyplot as plt
 
-# def prep_depth(depth_img):
-#     depth_img_rescaled = None
-#     if depth_img.dtype == np.uint16:
-#         # convert depth image from mili-meters to meters
-#         # depth_img_rescaled = cv2.rgbd.rescaleDepth(depth_img, cv2.CV_32FC1)
-#         depth_img_rescaled = depth_img.astype(np.float32) / 1000.0
-#     elif depth_img.dtype == np.float32:
-#         depth_img_rescaled = depth_img
-#     else:
-#         print("Unknown depth image encoding.")
-#         return None
-
-#     kZeroValue = 0.0
-#     nan_mask = (depth_img_rescaled != depth_img_rescaled)
-#     depth_img_rescaled[nan_mask] = kZeroValue # set nan pixels to 0
-
-#     return depth_img_rescaled
-
 def class_id_to_one_hot(class_id, num_classes=41):
     one_hot = np.zeros(num_classes, dtype=np.float32)
     one_hot[class_id] = 1.0

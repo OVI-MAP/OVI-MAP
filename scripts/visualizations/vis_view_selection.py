@@ -5,17 +5,14 @@ import cv2
 import numpy as np
 import torch
 import open3d as o3d
-# from scipy.spatial.transform import Rotation as R
 
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
 import rerun as rr
 from scipy.spatial.transform import Rotation as R
 
 # from plyfile import PlyData, PlyElement
-from .vis_utils import get_new_pallete
-from .data_loaders import ScannetLoader, ReplicaLoader
-from .mesh_postprocess_utils import init_label_colormap, match_feature_to_label_embed
+from scripts.visualizations.vis_utils import get_new_pallete
+from scripts.utils.data_loaders import ScannetLoader, ReplicaLoader
+from scripts.utils.mesh_postprocess_utils import init_label_colormap, match_feature_to_label_embed
 
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -65,7 +62,7 @@ def main(args):
     vl_model_name = 'siglip-l-16-384'
 
     if use_canonical_phrase:
-        from .text_embedding import TextEmbedder
+        from ..utils.text_embedding import TextEmbedder
         text_embedder = TextEmbedder(vl_model_name, device=DEVICE)
         text_embeds_canon = text_embedder.get_canonical_text_embed()
 

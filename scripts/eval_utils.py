@@ -421,4 +421,3 @@ def evaluate(
 
     return avgs
 
-    # chamfer_distances = calculate_chamfer_distance(chamfer_matches, gt_mesh_f)

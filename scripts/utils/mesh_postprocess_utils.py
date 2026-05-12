@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 
 from plyfile import PlyData, PlyElement
-from .vis_utils import get_new_pallete
+from ..visualizations.vis_utils import get_new_pallete
 
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")

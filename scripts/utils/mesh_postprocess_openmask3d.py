@@ -8,7 +8,7 @@ import open3d.core as o3c # type: ignore
 
 from .mesh_postprocess_utils import init_label_colormap
 from plyfile import PlyData, PlyElement
-from .vis_utils import get_new_pallete
+from ..visualizations.vis_utils import get_new_pallete
 from .mesh_postprocess_utils import write_ply_with_labels, match_feature_to_label_embed
 
 

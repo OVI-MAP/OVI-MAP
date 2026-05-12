@@ -36,37 +36,47 @@ siglip_model_list = {
 }
 
 class TextEmbedder:
-    def __init__(self, model_name, device):
+    def __init__(self, model_name, device, lazy_init=False):
         self.model_name = model_name
         self.device = device
+        self.canonical_phrases = ['object', 'things', 'stuff', 'texture']
+        if lazy_init:
+            return
 
+        self.load_model(model_name, device)
+
+    def load_model(self, model_name, device):
         if model_name in clip_model_list.keys():
             self.model_type = 'clip'
-            self.clip_model, _ = clip.load(clip_model_list[model_name], device=DEVICE)
+            self.clip_model, _ = clip.load(clip_model_list[model_name], device=device)
         elif model_name in siglip_model_list.keys():
             self.model_type = 'siglip'
-            self.siglip_model = AutoModel.from_pretrained(siglip_model_list[model_name]).eval().to(DEVICE)
+            self.siglip_model = AutoModel.from_pretrained(siglip_model_list[model_name]).eval().to(device)
             self.tokenizer = AutoTokenizer.from_pretrained(siglip_model_list[model_name])
         else:
             raise NotImplementedError(f'Unknown model name: {model_name}')
-
-        self.canonical_phrases = ['object', 'things', 'stuff', 'texture']
+   
 
     @torch.no_grad()
-    def get_text_embed(self, text_cands):
+    def get_text_embed(self, text_cands, load_np=None):
+        if load_np is not None:
+            text_embed = np.load(load_np)
+            return text_embed.to(self.device)
 
         if self.model_type == 'clip':
-            text_inputs = clip.tokenize(text_cands).to(DEVICE)
+            text_inputs = clip.tokenize(text_cands).to(self.device)
             text_feats = self.clip_model.encode_text(text_inputs)
         elif self.model_type == 'siglip':
             text_inputs = self.tokenizer(text_cands, padding="max_length", 
-                max_length=64, return_tensors="pt").to(DEVICE)
+                max_length=64, return_tensors="pt").to(self.device)
             text_feats = self.siglip_model.get_text_features(**text_inputs)
-
         return text_feats
 
     @torch.no_grad()
-    def get_canonical_text_embed(self):
+    def get_canonical_text_embed(self, load_np=None):
+        if load_np is not None:
+            canonical_text_embed = np.load(load_np)
+            return canonical_text_embed.to(self.device)
 
         return self.get_text_embed(self.canonical_phrases)
 

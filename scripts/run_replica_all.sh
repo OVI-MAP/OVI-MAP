@@ -2,8 +2,12 @@
 
 SceneList=("office0")
 # SceneList=("office0" "office1" "office2" "office3" "office4" "room0" "room1" "room2")
+
+# workspace dir
+WS=/home/zilong-ubuntu/Data
+
 # data source dir
-DataFolder=/home/zilong-ubuntu/Data/Datasets/Replica
+DataFolder=${WS}/Datasets/Replica
 
 ThreadNum=10
 logPrefix=info
@@ -14,10 +18,10 @@ export PYTHONPATH=${PYTHONPATH}:mapping_ros_ws/devel/lib
 for SceneNum in "${SceneList[@]}"; do
     echo "Processing Replica scene: $SceneNum"
 
-    ResultFolder=/home/zilong-ubuntu/Data/semantic_mapping_result/${SceneNum}
-    IntermediateSegsFolder=/home/zilong-ubuntu/Data/fuse_seg_temp/${SceneNum}
-    PanopticSegsFolder=/home/zilong-ubuntu/Data/sem_seg_temp/${SceneNum}
-    GeometricSegsFolder=/home/zilong-ubuntu/Data/geo_seg_temp/${SceneNum}
+    ResultFolder=${WS}/semantic_mapping_result/${SceneNum}
+    IntermediateSegsFolder=${WS}/fuse_seg_temp/${SceneNum}
+    PanopticSegsFolder=${WS}/sem_seg_temp/${SceneNum}
+    GeometricSegsFolder=${WS}/geo_seg_temp/${SceneNum}
 
     python scripts/panoptic_mapping_.py \
         --dataset replica --task Nyu40 \

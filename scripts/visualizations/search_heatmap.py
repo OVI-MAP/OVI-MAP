@@ -9,8 +9,8 @@ from scipy.spatial.transform import Rotation as R
 import matplotlib.pyplot as plt
 
 from plyfile import PlyData
-from .vis_utils import get_new_pallete
-from .text_embedding import TextEmbedder
+from scripts.visualizations.vis_utils import get_new_pallete
+from scripts.utils.text_embedding import TextEmbedder
 
 import rerun as rr
 
@@ -120,7 +120,7 @@ def main(args):
         inst_sim_score[0] = 0.5
     # min-max-norm
     inst_sim_score = (inst_sim_score - inst_sim_score.min()) / (inst_sim_score.max() - inst_sim_score.min())
-    print(inst_sim_score)
+    # print(inst_sim_score)
 
     heat_c = np.zeros_like(v_pos, dtype=np.uint8)
     # 'jet', 'plasma', 'coolwarm'

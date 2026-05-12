@@ -6,11 +6,11 @@ import numpy as np
 import open3d as o3d
 import open3d.core as o3c # type: ignore
 
-from .mesh_postprocess_utils import write_ply_with_labels
-from .vis_utils import get_new_pallete
+from scripts.utils.mesh_postprocess_utils import write_ply_with_labels
+from scripts.visualizations.vis_utils import get_new_pallete
 
 def convert_replica_sem_inst_mesh(data_folder, scene_num, res_folder):
-    from .semantic_const import Replica_map_to_reduced, REPLICA_52_PALETTE
+    from ..utils.semantic_const import Replica_map_to_reduced, REPLICA_52_PALETTE
 
     gt_sem_list_f = pjoin('/home/zilong/Disk_data/replica_gt_semantics', 
         f'semantic_labels_{scene_num}.txt')
@@ -66,9 +66,9 @@ def convert_replica_sem_inst_mesh(data_folder, scene_num, res_folder):
 def convert_scannet_mesh(data_folder, scene_num, res_folder, map_scannet200=True):
     if map_scannet200:
         # for coloring the mesh as much as possible
-        from .semantic_const import SCANNET_COLOR_MAP_200
+        from ..utils.semantic_const import SCANNET_COLOR_MAP_200
     else:
-        from .semantic_const import NYU_41_PALETTE
+        from ..utils.semantic_const import NYU_41_PALETTE
     import pandas as pd
 
     gt_sem_mesh_f = pjoin(
