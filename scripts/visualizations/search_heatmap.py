@@ -4,7 +4,7 @@ from os.path import join as pjoin
 import numpy as np
 import torch
 
-from scipy.spatial.transform import Rotation as R
+# from scipy.spatial.transform import Rotation as R
 
 import matplotlib.pyplot as plt
 

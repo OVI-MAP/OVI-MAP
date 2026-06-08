@@ -40,7 +40,7 @@ This is the official implementation of the CVPR2026 paper **OVI-MAP**.
 - [ ] Before 2026/06/01: Bug fixing and cleaning the codebase
 - [ ] Before 2026/07/01: Release the refactored codebase for easier installation and deployment.
 
-## Installation
+## Installation (Ubuntu 22.04 as an example)
 
 ### Download the Repo
 
@@ -87,7 +87,7 @@ python -m pip install ftfy regex git+https://github.com/openai/CLIP.git
 
 ```bash
 export ROS_VERSION=noetic
-cd semantic_mapping/mapping_ros_ws
+cd mapping_ros_ws
 catkin init
 catkin config --extend /opt/ros/$ROS_VERSION --merge-devel
 catkin config --cmake-args -DCMAKE_CXX_STANDARD=14 -DCMAKE_BUILD_TYPE=Release
@@ -101,7 +101,7 @@ wstool update
 ### Build the Environment
 
 ```bash
-cd semantic_mapping/mapping_ros_ws/src
+cd mapping_ros_ws/src
 catkin build consistent_gsm depth_segmentation_py
 ```
 
@@ -123,7 +123,6 @@ unzip Replica.zip && rm Replica.zip
 
 You need to download the dataset youself from [ScanNet](https://kaldir.vc.in.tum.de/scannet_benchmark/documentation).
 We prepared some scripts for you to extract the data you need, see: **./**
-
 
 ## How to Use It
 
@@ -155,7 +154,7 @@ python projects/CropFormer/demo_cropformer/demo_from_dirs.py --opts MODEL.WEIGHT
 
 > Model can be download under: [CropFormer_hornet_3x_03823a.pth](https://huggingface.co/datasets/qqlu1992/Adobe_EntitySeg/blob/main/CropFormer_model/Entity_Segmentation/CropFormer_hornet_3x/CropFormer_hornet_3x_03823a.pth)
 
-Group all of RGB segmentation results by the name of scene, and place them like:
+Group all of the RGB segmentation results by the name of the scene, and place them like:
 
 ```text
 [workspace dir]
@@ -186,13 +185,13 @@ bash scripts/run_replica_all.sh
 python -m scripts.utils.mesh_postprocess_utils --scene_num office0
 ```
 
-#### Evaluate the instance segmentation accuracy (after Step 1)
+#### (After Step 1) Evaluate the instance segmentation accuracy
 
 ```bash
 python -m scripts.eval_inst_seg --scene_num office0
 ```
 
-#### Evaluate the semantic segmentation accuracy (after Step 1)
+#### (After Step 1) Evaluate the semantic segmentation accuracy
 
 You need to modify the scene list for your specific dataset.
 
@@ -200,7 +199,7 @@ You need to modify the scene list for your specific dataset.
 python -m scripts.eval_sem_seg
 ```
 
-#### Heat Map Querying (after Step 1)
+#### (After Step 1) Heat Map Querying
 
 ```bash
 python -m scripts.utils.search_heatmap --scene_num scene0011_00 --search_text sofa
@@ -213,7 +212,7 @@ python -m scripts.utils.search_heatmap --scene_num scene0011_00 --search_text so
 If you cannot build opencv when **Install Thrid Party Packages**, try to manully download these files.
 
 ```bash
-cd ~/semantic_mapping/mapping_ros_ws/build/opencv3_catkin/opencv3_contrib_src/modules/xfeatures2d/src/
+cd mapping_ros_ws/build/opencv3_catkin/opencv3_contrib_src/modules/xfeatures2d/src/
 
 wget https://raw.githubusercontent.com/opencv/opencv_3rdparty/34e4206aef44d50e6bbcd0ab06354b52e7466d26/boostdesc_bgm.i
 wget https://raw.githubusercontent.com/opencv/opencv_3rdparty/34e4206aef44d50e6bbcd0ab06354b52e7466d26/boostdesc_bgm_bi.i

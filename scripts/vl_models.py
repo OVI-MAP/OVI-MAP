@@ -6,7 +6,6 @@ from tqdm import tqdm
 import cv2, copy
 from PIL import Image
 import numpy as np
-from numpy.linalg import inv as npinv
 import torch
 
 # image embedding
@@ -62,11 +61,6 @@ class VLModel:
     @torch.no_grad()
     def encode_image_with_bbox(self, rgb_img, inst_mask, bbox):
         x1, y1, x2, y2 = bbox
-
-        # # sanity check
-        # from matplotlib import pyplot as plt
-        # plt.imshow(rgb_img)
-        # plt.show()
 
         inst_img = copy.deepcopy(rgb_img)
         inst_img_black_bg = copy.deepcopy(rgb_img)

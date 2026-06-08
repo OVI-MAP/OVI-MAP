@@ -7,13 +7,11 @@ warnings.filterwarnings('ignore')
 import cv2
 import numpy as np
 import torch
-from scipy.spatial.transform import Rotation as R
-import open3d as o3d
-
-import matplotlib.pyplot as plt
+# from scipy.spatial.transform import Rotation as R
+# import open3d as o3d
+# import matplotlib.pyplot as plt
 
 # self packages
-import semantics.semantic_utils as semantic_utils
 from utils.common_utils import Segment, PointCloudProcessor
 from utils.data_loaders import ScannetLoader, ReplicaLoader, SceneNNLoader
 from scripts.visualizations.vis_utils import vis_id_map, vis_normal_map
@@ -232,18 +230,8 @@ def main(args):
     dataset = args.dataset
     panoptic_node = None
     
-    if dataset == "scenenn":
-        from utils.common_scenenn import SegmentsGenerator
-        PerceptionNode = semantic_utils.PerceptionNode
-        panoptic_node = PerceptionNode()
-    elif dataset == "scannet":
-        from utils.common_scannet import SegmentsGenerator
-        PerceptionNode = semantic_utils.PerceptionNode
-        panoptic_node = PerceptionNode()
-    elif dataset == "scannet_nyu":
+    if dataset == "scannet_nyu":
         from utils.common_scannet_nyu import SegmentsGenerator
-        PerceptionNode = semantic_utils.Mask2FormerNode
-        panoptic_node = PerceptionNode()
     elif dataset == "replica":
         from utils.common_scannet_nyu import SegmentsGenerator
     else:
@@ -354,16 +342,14 @@ def main(args):
     if not os.path.exists(temp_feats):
         os.makedirs(temp_feats)
 
-    if use_temp_results:
-        logging.info("Using pre-processed instance seg data!")
-        panoptic_node = None
-        if not use_geos:
-            dep_segmentor = depth_segmentation_py.DepthSegmentation_py(
-                H_depth,W_depth,cv2.CV_32FC1, K_depth
-            )
-        else:
-            logging.info("Using pre-processed depth seg data!")
-            dep_segmentor = None
+    logging.info("Using pre-processed instance seg data!")
+    if not use_geos:
+        dep_segmentor = depth_segmentation_py.DepthSegmentation_py(
+            H_depth,W_depth,cv2.CV_32FC1, K_depth
+        )
+    else:
+        logging.info("Using pre-processed depth seg data!")
+        dep_segmentor = None
             
     
     # create the segment generator

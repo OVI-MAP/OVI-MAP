@@ -16,15 +16,6 @@ FORMAT = '%(asctime)s.%(msecs)06d %(levelname)-8s: [%(filename)s] %(message)s'
 logging.basicConfig(level=logging.INFO, format=FORMAT, datefmt='%H:%M:%S')
 
 
-# module load stack/2024-06 && module load gcc/12.2.0 python/3.10.13 cuda/12.1.1 cudnn/8.9.7.29-12 cmake/3.27.7 eth_proxy
-# source ~/mask2former/bin/activate && cd ~/semantic_mapping_test
-
-# srun --time=1:00:00 -n 3 --mem-per-cpu=8g --gpus=1 --gres=gpumem:20g --pty bash
-# srun --time=1:00:00 -n 3 --mem-per-cpu=8g --gpus=nvidia_geforce_rtx_3090:1 --pty bash
-
-# sbatch --time=1:00:00 -n 3 --mem-per-cpu=8g --gpus=nvidia_geforce_rtx_4090:1 --output=log_siglip_so400m --wrap="python feature_aggregation.py"
-# sbatch --time=3:00:00 -n 3 --mem-per-cpu=10g --gpus=1 --gres=gpumem:30g --output=log_siglip2 --wrap="python feature_aggregation.py"
-
 class PointCloudProcessor:
     def __init__(self, points):
         self.pcd = o3d.geometry.PointCloud()

@@ -9,16 +9,17 @@ import torch
 from scipy.spatial.transform import Rotation as R
 import open3d as o3d
 import open3d.core as o3c  # type: ignore
+from plyfile import PlyData
 
 # self packages
-from utils.common_utils import Segment, vis_id_map, class_id_to_one_hot, PointCloudProcessor
-from utils.data_loaders import ScannetLoader, ReplicaLoader, SceneNNLoader
+from utils.common_utils import Segment, class_id_to_one_hot, PointCloudProcessor
+from utils.data_loaders import ScannetLoader, ReplicaLoader
 
 from vl_models import VLModel
-from plyfile import PlyData
 from scripts.visualizations.vis_utils import get_new_pallete
 
 from panoptic_mapping_ import update_view_cov_map, make_res_dirs
+
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -226,10 +227,7 @@ def main(args):
 
     # DataLoader
     traj_filename = args.traj_filename
-    if dataset == "scenenn":
-        data_loader = SceneNNLoader(scene_folder, traj_filename)
-    elif dataset == "scannet" or dataset == "scannet_nyu" \
-        or dataset == "scannet_nyu_gt":
+    if dataset == "scannet_nyu":
         data_loader = ScannetLoader(scene_folder)
     elif dataset == "replica":
         data_loader = ReplicaLoader(scene_folder)

@@ -9,14 +9,13 @@ import sys
 sys.path.append("/usr/lib/python3/dist-packages")
 
 # self packages
-from semantics.semantic_utils import NYU_40, COCO_133
-from semantics.pano_scannet_nyu_colormap import *
-from utils.common_utils import class_id_to_one_hot, dictToHd5, hd5ToDict
+from utils.semantic_const import NYU_40, COCO_PANOPTIC_133
+from utils.common_utils import class_id_to_one_hot
 from utils.common_utils import Segment
 from scripts.visualizations.vis_utils import vis_id_map
 
 NYU_41_text = ['Background'] + NYU_40
-COCO_134_text = ['Background'] + COCO_133
+COCO_134_text = ['Background'] + COCO_PANOPTIC_133
 BackgroundSemId = 0
 
 class SegmentDepthWrapper(threading.Thread):
