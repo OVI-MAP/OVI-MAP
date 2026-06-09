@@ -12,7 +12,6 @@ sys.path.append("/usr/lib/python3/dist-packages")
 from utils.semantic_const import NYU_40, COCO_PANOPTIC_133
 from utils.common_utils import class_id_to_one_hot
 from utils.common_utils import Segment
-from scripts.visualizations.vis_utils import vis_id_map
 
 NYU_41_text = ['Background'] + NYU_40
 COCO_134_text = ['Background'] + COCO_PANOPTIC_133

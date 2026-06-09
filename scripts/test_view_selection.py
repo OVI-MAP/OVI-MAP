@@ -16,7 +16,7 @@ from utils.common_utils import Segment, class_id_to_one_hot, PointCloudProcessor
 from utils.data_loaders import ScannetLoader, ReplicaLoader
 
 from vl_models import VLModel
-from scripts.visualizations.vis_utils import get_new_pallete
+from visualizations.vis_utils import get_new_pallete
 
 from panoptic_mapping_ import update_view_cov_map, make_res_dirs
 

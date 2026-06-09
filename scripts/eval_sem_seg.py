@@ -7,7 +7,7 @@ import torch
 from plyfile import PlyData
 
 from .eval_utils import init, evaluate
-from scripts.utils.mesh_postprocess_utils import init_label_colormap
+from .utils.mesh_postprocess_utils import init_label_colormap
 
 def map_gt_mesh(cfg_gt_mesh):
     res_folder = cfg_gt_mesh["res_folder"]
@@ -230,14 +230,12 @@ def main(args):
 
     for scene_num in scene_list:
         print(f'Processing scene: {scene_num}')
-        # cropformer_inst | cropformer_inst_combine | gt_inst_vis
-        seq_folder = pjoin(result_folder, scene_num, 'cropformer_inst_rt')
-        #  | eval_gt_inst_incre_vis
-        eval_folder = pjoin(seq_folder, 'eval_ours')
-        # eval_folder = pjoin(seq_folder, '..', 'eval_ours_OM3D')
+        # cropformer_inst
+        seq_folder = pjoin(result_folder, scene_num, 'cropformer_inst')
+        eval_folder = pjoin(seq_folder, 'eval')
 
         res_f = os.path.join(result_folder, 
-            "results_replica_ours_real_time.json")
+            "results_replica.json")
 
         if not os.path.exists(eval_folder):
             os.makedirs(eval_folder, exist_ok=True)
@@ -255,13 +253,6 @@ def main(args):
         # frame_cnt = 160
         pred_inst_mesh_f = pjoin(seq_folder, f'instance_map_gt_{frame_cnt}.ply')
         pred_sem_mesh_f = pjoin(seq_folder, f'semantic_map_gt_{frame_cnt}.ply')
-        # pred_sem_mesh_f = pjoin(seq_folder, '..', 'ours_openmask3d_sem.ply')
-
-        # pred_inst_mesh_f = pjoin(seq_folder, '..', 'gt_instance_mesh.ply')
-        # pred_sem_mesh_f = pjoin(seq_folder, 'gt_inst_sem.ply')
-
-        # pred_inst_mesh_f = pjoin(seq_folder, '..', 'segment3d_instance.ply')
-        # pred_sem_mesh_f = pjoin(seq_folder, '..', 'segment3d_openmask3d_sem.ply')
         
         # ========================================================================
 

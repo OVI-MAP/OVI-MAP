@@ -13,7 +13,7 @@ from scipy.spatial.transform import Rotation as R
 from scripts.visualizations.vis_utils import get_new_pallete
 from scripts.utils.data_loaders import ScannetLoader, ReplicaLoader
 from scripts.utils.mesh_postprocess_utils import init_label_colormap, match_feature_to_label_embed
-
+from scripts.utils.text_embedding import TextEmbedder
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -46,7 +46,7 @@ def main(args):
     use_canonical_phrase = True
 
     task = 'Replica' # NYU40 | CoCoPano | Replica | Scannet200
-    text_prompt, _, _, valid_ids = init_label_colormap(task)
+    text_prompt, labels, _, valid_ids = init_label_colormap(task)
 
     if task == 'Replica':
         scene_folder = pjoin('/media/zilong/Documents/MasterProject/Replica', scene_num)
@@ -58,18 +58,36 @@ def main(args):
     depth_h = data_loader.depth_h
     depth_w = data_loader.depth_w
 
-    text_embed_dir = '/home/zilong/Downloads/scans'
-    vl_model_name = 'siglip-l-16-384'
-
+    VLM_name = 'siglip-l-16-384'
+    text_embedder = TextEmbedder(VLM_name, device=DEVICE)
     if use_canonical_phrase:
-        from ..utils.text_embedding import TextEmbedder
-        text_embedder = TextEmbedder(vl_model_name, device=DEVICE)
         text_embeds_canon = text_embedder.get_canonical_text_embed()
+
+    load_text_embeds = False
+    if load_text_embeds:
+        text_embed_dir = '/home/zilong/Disk_data/semantic_mapping_result'
+        text_embeds_f = pjoin(text_embed_dir, f'{VLM_name}_{text_prompt}.pkl')
+        with open(text_embeds_f, 'rb') as f:
+            feat_cand_list = pickle.load(f)
+        text_words = []
+        text_embeds = []
+        for w, em in feat_cand_list.items():
+            # ======= Skip the background class ======
+            if w == 'background':
+                continue
+            # ========================================
+            text_words.append(w)
+            text_embeds.append(em)
+        text_embeds = torch.from_numpy(np.array(text_embeds)).to(DEVICE)
+    else:
+        text_words = labels[1:] # skip background
+        text_embeds = text_embedder.get_text_embed(text_words)
+    
 
     pred_inst_mesh_f = glob.glob(pjoin(result_folder, 'instance_mesh_*.ply'))[0]
     frame_cnt = os.path.basename(pred_inst_mesh_f)[14:-4]
-    view_select = 'incre_vis_fix' # top-8 | viewcov | incre_vis | incre_viewcov | incre_combine
-    inst_sem_feat_name =  f'inst_sem_{vl_model_name}_{frame_cnt}_{view_select}.pkl'
+    view_select = 'incre_combine' # incre_vis | incre_combine
+    inst_sem_feat_name =  f'inst_sem_{VLM_name}_{frame_cnt}_{view_select}.pkl'
     with open(pjoin(result_folder,inst_sem_feat_name), 'rb') as f:
         inst_sem_dict = pickle.load(f)    
 
@@ -84,21 +102,6 @@ def main(args):
     triangle_c = (triangle_c * 255.0).astype(np.uint8) # indexed by triangle-idx
     
     # ####################### Feature Mapping #######################
-    text_embed_dir = '/home/zilong/Disk_data/semantic_mapping_result'
-    text_embeds_f = pjoin(text_embed_dir, f'{vl_model_name}_{text_prompt}.pkl')
-    with open(text_embeds_f, 'rb') as f:
-        feat_cand_list = pickle.load(f)
-    text_words = []
-    text_embeds = []
-    for w, em in feat_cand_list.items():
-        # ======= Skip the background class ======
-        if w == 'background':
-            continue
-        # ========================================
-        text_words.append(w)
-        text_embeds.append(em)
-    text_embeds = torch.from_numpy(np.array(text_embeds)).to(DEVICE)
-
     # ## Map the extracted features to text embeddings
     color_to_inst = {}
     legend_handles = []
@@ -187,7 +190,7 @@ def main(args):
     #                bbox_to_anchor=(0.5, 0.5), borderaxespad=0.0)
     #     plt.axis('off')
     #     plt.savefig(
-    #         pjoin(result_folder, f'sem_map_{vl_model_name}_{text_prompt}.png'), 
+    #         pjoin(result_folder, f'sem_map_{VLM_name}_{text_prompt}.png'), 
     #         bbox_inches='tight', pad_inches=0.1
     #     )
     #     plt.close()

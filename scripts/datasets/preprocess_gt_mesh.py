@@ -234,7 +234,7 @@ def map_part_to_gt(gt_mesh, pred_mesh, out_mesh_f):
     
     
 
-# python -m scripts.utils.preprocess_gt_mesh --scene_num office0
+# python -m scripts.datasets.preprocess_gt_mesh --scene_num office0
 
 def main(args):
     scene_num = args.scene_num
@@ -248,25 +248,6 @@ def main(args):
     # convert_scannet_mesh(scene_folder, scene_num, result_folder, map_scannet200=False)
     # for replica
     convert_replica_sem_inst_mesh(scene_folder, scene_num, result_folder)
-
-    # # gt_mesh_f = pjoin(scene_folder, '..', f'{scene_num}_mesh.ply') # replica
-    # gt_mesh_f = pjoin(scene_folder, f'{scene_num}_vh_clean_2.ply')
-    # gt_mesh = PlyData.read(gt_mesh_f)
-
-    # # crop the gt scene according to the reconstructed instance mesh
-    # pred_inst_mesh_f = glob.glob(pjoin(
-    #     result_folder, 'cropformer_inst', f'instance_mesh_*.ply'
-    # ))[0]
-    # pred_inst_mesh = o3d.t.io.read_triangle_mesh(pred_inst_mesh_f)
-    # out_mesh_f = pjoin(result_folder, f'scene_from_recon.ply')
-    # crop_gt_mesh(gt_mesh, pred_inst_mesh, out_mesh_f)
-
-    # # map the mask3d / segment3d results on the partly scene to gt mesh
-    # pred_inst_mesh_f = pjoin(result_folder, f'segment3d_instance_part.ply')
-    # pred_mesh = PlyData.read(pred_inst_mesh_f)
-    # out_mesh_f = pjoin(result_folder, f'segment3d_part_map_to_gt.ply')
-    # map_part_to_gt(gt_mesh, pred_mesh, out_mesh_f)
-    # os.system(f'rm -rf {pred_inst_mesh_f}')
 
 
 

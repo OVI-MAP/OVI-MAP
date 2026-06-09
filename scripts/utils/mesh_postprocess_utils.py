@@ -13,7 +13,7 @@ import matplotlib.patches as mpatches
 
 from plyfile import PlyData, PlyElement
 from ..visualizations.vis_utils import get_new_pallete
-
+from .text_embedding import TextEmbedder
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -184,7 +184,7 @@ def main(args):
 
     result_folder = args.result_folder
     result_folder = pjoin(result_folder, scene_num)
-    result_folder = pjoin(result_folder, 'cropformer_inst_rt')
+    result_folder = pjoin(result_folder, 'cropformer_inst')
     if not os.path.exists(result_folder):
         os.makedirs(result_folder)
 
@@ -192,7 +192,6 @@ def main(args):
     VLM_name = 'siglip-l-16-384'
 
     # TODO flags to trigger =====================
-    output_mask_file = False         # if save the mask for openmask3d
     map_to_gt_mesh = True
     use_canonical_phrase = True
 
@@ -200,23 +199,21 @@ def main(args):
     remove_raw_recon = False # NOTE Attention !!!!!
     # ===========================================
 
-    if use_canonical_phrase:
-        from .text_embedding import TextEmbedder
-        text_embedder = TextEmbedder(VLM_name, device=DEVICE)
-        text_embeds_canon = text_embedder.get_canonical_text_embed()
-    
-
     gt_inst_mesh_f = pjoin(result_folder, '..', 'gt_instance_mesh.ply')
     pred_inst_mesh_f = sorted(glob.glob(pjoin(result_folder, 'instance_mesh_*.ply')))[0]
     
-    if output_mask_file:
-        mask_out_dir = '/home/zilong/Disk_data/Mask3D/ours_masks'
-        os.makedirs(mask_out_dir, exist_ok=True)
-        mask_save_f = pjoin(mask_out_dir, f'{scene_num}_masks.pt') 
+    # if output_mask_file:
+    #     mask_out_dir = '/home/zilong/Disk_data/Mask3D/ours_masks'
+    #     os.makedirs(mask_out_dir, exist_ok=True)
+    #     mask_save_f = pjoin(mask_out_dir, f'{scene_num}_masks.pt') 
 
     frame_cnt = os.path.basename(pred_inst_mesh_f)[14:-4]
-    view_select = 'real_time' # random-8 | viewcov | incre_vis | incre_combine | incre_vis_normal
+    # TODO
+    view_select = 'incre_combine' # random-8 | incre_vis | incre_combine
     inst_sem_feat_name =  f'inst_sem_{VLM_name}_{frame_cnt}_{view_select}.pkl'
+    # load the per-instance semantic feature dict
+    with open(pjoin(result_folder, inst_sem_feat_name), 'rb') as f:
+        inst_sem_dict = pickle.load(f)
 
     out_inst_mesh_f = pjoin(
         result_folder, f'instance_map_gt_{frame_cnt}.ply')
@@ -224,13 +221,6 @@ def main(args):
         result_folder, f'semantic_map_gt_{frame_cnt}.ply') # _nyu40
 
     # =================== parameters setting ends here ===================
-
-
-
-
-    text_embed_dir = '/home/zilong/Disk_data/semantic_mapping_result'
-    with open(pjoin(result_folder, inst_sem_feat_name), 'rb') as f:
-        inst_sem_dict = pickle.load(f)
 
     text_prompt, labels, color_map, valid_ids = init_label_colormap(task)
     # plt.figure(figsize=(20, 6))
@@ -240,22 +230,33 @@ def main(args):
     # plt.title(f'Color Map for {task}')
     # plt.savefig(pjoin(result_folder, f'color_map_{task}.png'))
     # plt.close()
-    
-    # ####################### Feature Mapping #######################
-    text_embeds_f = pjoin(text_embed_dir, f'{VLM_name}_{text_prompt}.pkl')
-    with open(text_embeds_f, 'rb') as f:
-        feat_cand_list = pickle.load(f)
-    text_words = []
-    text_embeds = []
-    for w, em in feat_cand_list.items():
-        # ======= Skip the background class ======
-        if w == 'background':
-            continue
-        # ========================================
-        text_words.append(w)
-        text_embeds.append(em)
-    text_embeds = torch.from_numpy(np.array(text_embeds)).to(DEVICE)
 
+    text_embedder = TextEmbedder(VLM_name, device=DEVICE)
+    if use_canonical_phrase:
+        text_embeds_canon = text_embedder.get_canonical_text_embed()
+
+    load_text_embeds = False
+    if load_text_embeds:
+        text_embed_dir = '/home/zilong/Disk_data/semantic_mapping_result'
+        text_embeds_f = pjoin(text_embed_dir, f'{VLM_name}_{text_prompt}.pkl')
+        with open(text_embeds_f, 'rb') as f:
+            feat_cand_list = pickle.load(f)
+        text_words = []
+        text_embeds = []
+        for w, em in feat_cand_list.items():
+            # ======= Skip the background class ======
+            if w == 'background':
+                continue
+            # ========================================
+            text_words.append(w)
+            text_embeds.append(em)
+        text_embeds = torch.from_numpy(np.array(text_embeds)).to(DEVICE)
+    else:
+        text_words = labels[1:] # skip background
+        text_embeds = text_embedder.get_text_embed(text_words)
+    
+
+    # ####################### Feature Mapping #######################
     # ## Map the extracted features to text embeddings
     
     color_to_inst = {}
@@ -314,8 +315,8 @@ def main(args):
     out_vertex_labels = np.zeros(num_v, dtype=np.uint16)
     out_vertex_inst_id = np.zeros(num_v, dtype=np.uint16)
     
-    if output_mask_file:
-        masks = np.zeros((num_v, len(color_to_inst)), dtype=np.uint8) # (N, M)
+    # if output_mask_file:
+    #     masks = np.zeros((num_v, len(color_to_inst)), dtype=np.uint8) # (N, M)
 
     # Color the instance in the mesh according to the class name
     for inst_i, inst_item in enumerate(color_to_inst.items()):
@@ -329,16 +330,16 @@ def main(args):
             continue  # Skip empty instances
         inst_vertices = triangles[triangle_mask].flatten() # [M, 3] -> [M*3] Array of vertex ids
 
-        if output_mask_file:
-            masks[inst_vertices, inst_i] = 1
+        # if output_mask_file:
+        #     masks[inst_vertices, inst_i] = 1
 
         # [M*3, 3]
         out_mesh_colors[inst_vertices] = np.array(class_color, dtype=np.uint8)
         out_vertex_labels[inst_vertices] = inst_info['class_id']
         out_vertex_inst_id[inst_vertices] = inst_info['glo_inst_id']
 
-    if output_mask_file:
-        torch.save(masks, mask_save_f)
+    # if output_mask_file:
+    #     torch.save(masks, mask_save_f)
     
     # =========================================================================
     if map_to_gt_mesh:

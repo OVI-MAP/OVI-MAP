@@ -13,8 +13,8 @@ import torch
 
 # self packages
 from utils.common_utils import Segment, PointCloudProcessor
-from utils.data_loaders import ScannetLoader, ReplicaLoader, SceneNNLoader
-from scripts.visualizations.vis_utils import vis_id_map, vis_normal_map
+from utils.data_loaders import ScannetLoader, ReplicaLoader
+from visualizations.vis_utils import vis_id_map
 
 from vl_models import VLModel
 
@@ -148,26 +148,6 @@ def make_res_dirs(args):
     
     return res_dirs
 
-def calculate_rot_diff(pose_tar, pose_cur):
-    """Calculate the rotation difference between two poses."""
-    if len(pose_tar.shape) == 2:
-        pose_tar = pose_tar[None, :, :]
-
-    rot_tar = pose_tar[:, :3, :3]
-    rot_cur = pose_cur[:3, :3]
-    rot_diff = rot_tar @ rot_cur.T # [N, 3, 3]
-    cos_angle = (np.trace(rot_diff, axis1=-2, axis2=-1) - 1.0) / 2.0
-    angle_diff = np.arccos(np.clip(cos_angle, -1.0, 1.0))
-    return angle_diff
-
-
-def dice_coeff(mask1_area, mask2_area, overlap_area):
-    """Calculate the Dice coefficient between two masks."""
-    if (mask1_area + mask2_area) == 0:
-        return 0.0
-    return (2.0 * overlap_area + 1e-6) / (mask1_area + mask2_area + 1e-6)
-
-
 
 def init_view_cov(
     depth_scaled, inst_d_mask, inst_points, 
@@ -270,12 +250,7 @@ def main(args):
     log_info = args.log
 
     # DataLoader
-    traj_filename = args.traj_filename
-    if dataset == "scenenn":
-        data_loader = SceneNNLoader(
-            scene_folder, traj_filename, args.preload, args.preload)
-    elif dataset == "scannet" or dataset == "scannet_nyu" \
-        or dataset == "scannet_nyu_gt":
+    if dataset == "scannet_nyu":
         data_loader = ScannetLoader(
             scene_folder, args.preload, args.preload)
     elif dataset == "replica":
@@ -323,9 +298,9 @@ def main(args):
     # ==========================================================
     # TODO set flag for complete open-set segmentation
     VLM_name = 'siglip-l-16-384'
-    exp_results = pjoin(result_dirs['folder'], 'cropformer_inst_combine')
-    temp_feats = pjoin(result_dirs['folder'], 'cropformer_inst', 'temp_feats')
-    use_prev_feat = True
+    exp_results = pjoin(result_dirs['folder'], 'cropformer_inst')
+    # temp_feats = pjoin(result_dirs['folder'], 'cropformer_inst', 'temp_feats')
+    # use_prev_feat = False
 
     # NOTE they are mutually exclusive
     select_by_vis = False
@@ -339,8 +314,8 @@ def main(args):
 
     if not os.path.exists(exp_results):
         os.makedirs(exp_results)
-    if not os.path.exists(temp_feats):
-        os.makedirs(temp_feats)
+    # if not os.path.exists(temp_feats):
+    #     os.makedirs(temp_feats)
 
     logging.info("Using pre-processed instance seg data!")
     if not use_geos:
@@ -365,11 +340,7 @@ def main(args):
     vl_model = VLModel(model_name=VLM_name, img_size=(H_depth, W_depth), device=DEVICE)
     logging.info(f"VL model {VLM_name} initialized!")
 
-    new_view_angle_thres = np.deg2rad(4)
-    # similar_view_angle_thres = np.deg2rad(10)
-
     ray_cast_max_depth = 50.0
-
     # minimum visible area in the pano seg for an instance to be considered
     vis_area_thres = 1000
     max_top_vis = 8
@@ -385,7 +356,7 @@ def main(args):
     inst_dict = {}
     yx_grid = np.mgrid[0:H_depth, 0:W_depth] # (2, H, W)
     sph_grid_size = (int(H_depth/8), int(W_depth/8))
-    theta_phi_grid = np.mgrid[0:sph_grid_size[0], 0:sph_grid_size[1]]
+    # theta_phi_grid = np.mgrid[0:sph_grid_size[0], 0:sph_grid_size[1]]
 
 
     
@@ -441,21 +412,13 @@ def main(args):
                 pose, segment.is_thing, segment.segment_label
             )
     
-        # Run the algorithm
+        # update the global segment map with the new segments
         gsm_node.integrateFrame()
-
 
         # Ray casting to get the global instance map from the super points
         glo_inst_map = gsm_node.raycastInstancePredictions(
             pose, inst_seg, depth_scaled
         )
-        
-        # # NOTE dump glo_inst_map for time measuring on the server
-        # cv2.imwrite(pjoin(glo_2d_map_dir, 
-        #     os.path.basename(data_loader.rgb_path_map[f_i]).split('.')[0] + '.png'), 
-        #     glo_inst_map.astype(np.uint16)
-        # )
-        # vis_id_map(glo_inst_map, f'{glo_2d_map_vis}/raycast_{f_i}.png')
 
         if not select_by_vis:
             depth_scaled[~valid_d_mask] = 0.0
@@ -486,17 +449,6 @@ def main(args):
             # count the pixel in the overlap area
             overlap_area = np.max(pano_id_count)
             overlap_mask = np.logical_and(glo_inst_mask, pano_mask)
-
-            # # count the area of the convex hull
-            # pano_id_contours, _ = cv2.findContours(
-            #     overlap_mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            # if len(pano_id_contours) > 0:
-            #     inst_contour = max(pano_id_contours, key=cv2.contourArea)
-            #     cvx_hull = cv2.convexHull(inst_contour)
-            #     overlap_area = cv2.contourArea(cvx_hull)
-            # else:
-            #     overlap_area = np.max(pano_id_count)
-
 
             # 2. check the visibility of the instance
             if pano_id_area < vis_area_thres:
@@ -580,18 +532,17 @@ def main(args):
             y1, x1 = np.min(yxs[0]), np.min(yxs[1])
             y2, x2 = np.max(yxs[0]), np.max(yxs[1])
             
-            vis_feat_name = f"{VLM_name}_F_{f_i}_{x1}-{y1}-{x2-x1}-{y2-y1}.npy"
-            vis_feat_path = pjoin(temp_feats, vis_feat_name)
-            if use_prev_feat and os.path.exists(vis_feat_path):
-                # load the feature from the file
-                roi_feat = np.load(vis_feat_path)
-            else:
-                # masked by the union
-                obj_mask = np.logical_or(pano_mask, glo_inst_mask)
-                roi_feat = vl_model.encode_image_with_bbox(
-                    rgb_img, obj_mask, (x1, y1, x2, y2)
-                )
-                np.save(vis_feat_path, roi_feat)
+            # vis_feat_name = f"{VLM_name}_F_{f_i}_{x1}-{y1}-{x2-x1}-{y2-y1}.npy"
+            # vis_feat_path = pjoin(temp_feats, vis_feat_name)
+            # if use_prev_feat and os.path.exists(vis_feat_path):
+            #     roi_feat = np.load(vis_feat_path) # load the feature from the file
+            # else:
+            # masked by the union
+            obj_mask = np.logical_or(pano_mask, glo_inst_mask)
+            roi_feat = vl_model.encode_image_with_bbox(
+                rgb_img, obj_mask, (x1, y1, x2, y2)
+            )
+            # np.save(vis_feat_path, roi_feat)
 
             # 6. Add the instance to the buffer
             inst_dict[glo_inst_id]['frame_id'].append(f_i)

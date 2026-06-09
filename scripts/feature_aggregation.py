@@ -10,98 +10,12 @@ import torch
 import open3d as o3d
 
 from vl_models import VLModel
+from panoptic_mapping_ import init_view_cov, update_view_cov_map
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 FORMAT = '%(asctime)s.%(msecs)06d %(levelname)-8s: [%(filename)s] %(message)s'
 logging.basicConfig(level=logging.INFO, format=FORMAT, datefmt='%H:%M:%S')
 
-
-class PointCloudProcessor:
-    def __init__(self, points):
-        self.pcd = o3d.geometry.PointCloud()
-        self.pcd.points = o3d.utility.Vector3dVector(points)
-
-    def get_bounding_box(self):
-        """
-        Computes the oriented bounding box based on the PCA of the convex hull.
-        """
-        try:
-            # Try computing the Oriented Bounding Box (OBB)
-            obb = self.pcd.get_oriented_bounding_box()
-            position = obb.center
-            extent = obb.extent
-            rotation = obb.R  # 3x3 rotation matrix
-        except RuntimeError:
-            print("Warning: OBB computation failed, using AABB instead.")
-            
-            # Compute Axis-Aligned Bounding Box (AABB)
-            aabb = self.pcd.get_axis_aligned_bounding_box()
-            max_pos = aabb.max_bound
-            min_pos = aabb.min_bound
-            position = (max_pos + min_pos) / 2
-            extent = np.abs(max_pos - min_pos)
-            rotation = np.eye(3)  # Identity matrix (no rotation)
-
-        return position, extent, rotation
-
-    def process(self, voxel_size=0.01):
-        # sparsify pcl
-        self.pcd = self.pcd.voxel_down_sample(voxel_size)
-        # remove outlier
-        nb_neighbors=10
-        std_thres=2.0
-        self.pcd, _ = self.pcd.remove_statistical_outlier(nb_neighbors, std_thres)
-        # calculate boundiing box
-        return self.get_bounding_box()
-
-def init_view_cov(
-    depth_scaled, inst_d_mask, inst_points, 
-    glo_inst_id, cur_inst_info, 
-    vis_area_thres, sph_grid_size
-):
-    depth_arr = depth_scaled[inst_d_mask]
-    if len(depth_arr) < 0.5 * vis_area_thres:
-        logging.warning(f"[Skip] Not enough depth pts to init inst {glo_inst_id}")
-        return False, None
-
-    PCLprocessor = PointCloudProcessor(inst_points)
-    bbox_res = PCLprocessor.process(voxel_size=0.01)
-    bbox_pos, bbox_extent, bbox_rot_matrix = bbox_res
-
-    view_map = np.zeros(sph_grid_size, dtype=np.uint8)
-    cur_inst_info['view_map'] = view_map
-    cur_inst_info['bbox_c'] = bbox_pos
-    cur_inst_info['bbox_s'] = bbox_extent
-    cur_inst_info['bbox_rot'] = np.array(bbox_rot_matrix)
-
-    return True, cur_inst_info
-
-def update_view_cov_map(
-    inst_points, bbox_c, view_map, sph_grid_size, 
-    view_overlap_ratio_thres
-):
-    obj_rays = inst_points - bbox_c.T
-    obj_rays = obj_rays / np.linalg.norm(obj_rays, axis=-1, keepdims=True)
-    # convert them to sph coord and map to the occ grid
-    theta = np.arccos(np.clip(obj_rays[:,2], -1.0, 1.0))  # in [0, pi]
-    theta = theta / np.pi * sph_grid_size[0]  # map to [0, grid_H]
-    theta = np.floor(theta).astype(np.int32)
-    phi = np.arctan2(obj_rays[:,1], obj_rays[:,0])  # in [-pi, pi]
-    phi = (phi + np.pi) / (2 * np.pi) * sph_grid_size[1]  # map to [0, grid_W]
-    phi = np.floor(phi).astype(np.int32)
-
-    # 4.3. check the overlapping with the existing views
-    sph_coords = np.unique(np.stack((theta, phi), axis=1), axis=0)  # (M, 2) removed duplicates
-    view_overlap_area = np.count_nonzero(
-        view_map[sph_coords[:, 0], sph_coords[:, 1]] > 0)
-    view_overlap_ratio = view_overlap_area / sph_coords.shape[0]
-    if view_overlap_ratio > view_overlap_ratio_thres:
-        # too many overlapping views, skip this instance
-        return False, None
-    
-    # logging.info(f"Add inst {glo_inst_id} with view overlap ratio {view_overlap_ratio:.2f}")
-    view_map[sph_coords[:, 0], sph_coords[:, 1]] = 1
-    return True, view_map
 
 
 def main(scene_name):

@@ -15,7 +15,9 @@
     <sup>5</sup>Microsoft&emsp;
     <sup>*</sup>Equal contribution
   </p>
-  <h3 align="center"><a href="https://arxiv.org/abs/2603.26541">Paper</a> | <a href="https://ovi-map.github.io/">Project Page</a> </h3>
+  <h3 align="center">
+    <a href="https://arxiv.org/abs/2603.26541">Paper</a> | <a href="https://ovi-map.github.io/">Project Page</a> | <a href="https://cvpr.thecvf.com/virtual/2026/poster/39644">Poster & Video</a>
+  </h3>
   <div align="center"></div>
 </p>
 
@@ -23,14 +25,13 @@ This is the official implementation of the CVPR2026 paper **OVI-MAP**.
 
 ### BibTex
 
-<pre><code>@misc{deng2026ovimap,
-  title={OVI-MAP:Open-Vocabulary Instance-Semantic Mapping}, 
-  author={Zilong Deng and Federico Tombari and Marc Pollefeys and Johanna Wald and Daniel Barath},
-  year={2026},
-  eprint={2603.26541},
-  archivePrefix={arXiv},
-  primaryClass={cs.CV},
-  url={https://arxiv.org/abs/2603.26541}, 
+<pre><code>@InProceedings{deng2026ovimap,
+  author    = {Deng, Zilong and Tombari, Federico and Pollefeys, Marc and Wald, Johanna and Barath, Daniel},
+  title     = {OVI-MAP: Open-Vocabulary Instance-Semantic Mapping},
+  booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+  month     = {June},
+  year      = {2026},
+  pages     = {12606-12616}
 }
 </code></pre>
 
@@ -124,6 +125,14 @@ unzip Replica.zip && rm Replica.zip
 You need to download the dataset youself from [ScanNet](https://kaldir.vc.in.tum.de/scannet_benchmark/documentation).
 We prepared some scripts for you to extract the data you need, see: **./**
 
+### Prepared the GT instance & semantic mesh for evaluation
+
+Modify the data locations in **\scripts\datasets\preprocess_gt_mesh.py**, and run it to convert the original GT labelings to unified meshes with vertex label.
+
+```bash
+python -m scripts.datasets.preprocess_gt_mesh --scene_num office0
+```
+
 ## How to Use It
 
 ### Source the environment
@@ -179,7 +188,7 @@ bash scripts/run_replica_all.sh
 
 ### Run Post-Processing
 
-#### [Step 1] Convert the instance code-book to colored instance mesh and semantic mesh
+#### [Step 1] Map the generated instnace mesh and per-instance semantics to the GT mesh and the dataset's labels
 
 ```bash
 python -m scripts.utils.mesh_postprocess_utils --scene_num office0
@@ -194,6 +203,7 @@ python -m scripts.eval_inst_seg --scene_num office0
 #### (After Step 1) Evaluate the semantic segmentation accuracy
 
 You need to modify the scene list for your specific dataset.
+Make sure you have all the converted (mapped to the gt mesh) instance meshes and semantic meshes of your selected scenes above.
 
 ```bash
 python -m scripts.eval_sem_seg
@@ -201,9 +211,16 @@ python -m scripts.eval_sem_seg
 
 #### (After Step 1) Heat Map Querying
 
+Here we only need the instance mesh mapped to the GT mesh, and the per-instance semantics.
+You can also use the raw generated mesh, but it's too large and will take a lot of resources.
+
 ```bash
-python -m scripts.utils.search_heatmap --scene_num scene0011_00 --search_text sofa
+python -m scripts.visualizations.search_heatmap --scene_num scene0011_00 --search_text sofa
 ```
+
+## Acknowledgements
+
+The code for class-agnostic instance segmentation was built upon the code of [ConsistentPanopticSLAM](https://github.com/y9miao/ConsistentPanopticSLAM). We sincerely thank the authors.
 
 ## FAQ / Bug fixing
 

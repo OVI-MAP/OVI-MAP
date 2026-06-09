@@ -185,7 +185,6 @@ def main(args):
     scene_num = args.scene_num
     result_folder = args.result_folder
 
-    # 'original_res_close-sem' | 'cropformer_inst_res'
     result_folder = pjoin(result_folder, scene_num, 'cropformer_inst')
     if not os.path.exists(result_folder):
         raise FileNotFoundError(f"Result folder {result_folder} does not exist.")
@@ -194,11 +193,6 @@ def main(args):
         result_folder, '..', 'gt_instance_mesh.ply')
     pred_inst_mesh_f = glob.glob(
         pjoin(result_folder, 'instance_map_gt_*.ply'))[0]
-
-    # pred_inst_mesh_f = pjoin(result_folder, '..', 'segment3d_instance.ply')
-    # pred_inst_mesh_f = pjoin(result_folder, '..', 'mask3d_instance.ply')
-    # pred_inst_mesh_f = pjoin(result_folder, '..', 'mask3d_part_map_to_gt.ply')
-    # pred_inst_mesh_f = pjoin(result_folder, '..', 'segment3d_part_map_to_gt.ply')
 
     assign_pred_inst_to_gt_inst(gt_inst_mesh_f, pred_inst_mesh_f, result_folder)
 

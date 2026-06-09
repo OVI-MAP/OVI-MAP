@@ -19,15 +19,15 @@ def init(task):
     global CLASS_LABELS
     global VALID_CLASS_IDS
     if task == 'NYU40':
-        from scripts.utils.semantic_const import NYU_40
+        from .utils.semantic_const import NYU_40
         CLASS_LABELS = NYU_40
         VALID_CLASS_IDS = [i+1 for i in range(len(CLASS_LABELS))]
     elif task == 'CoCo':
-        from scripts.utils.semantic_const import COCO_PANOPTIC_133
+        from .utils.semantic_const import COCO_PANOPTIC_133
         CLASS_LABELS = COCO_PANOPTIC_133
         VALID_CLASS_IDS = [i+1 for i in range(len(CLASS_LABELS))]
     elif task == 'Replica':
-        from scripts.utils.semantic_const import REPLICA_51, CLASS_LABELS_REPLICA
+        from .utils.semantic_const import REPLICA_51, CLASS_LABELS_REPLICA
         all_labels = ['background'] + REPLICA_51
         CLASS_LABELS = []
         VALID_CLASS_IDS = []
@@ -36,11 +36,11 @@ def init(task):
             if label in all_labels:
                 VALID_CLASS_IDS.append(all_labels.index(label))
     elif task == 'Scannet200':
-        from scripts.utils.semantic_const import CLASS_LABELS_200, VALID_CLASS_IDS_200
+        from .utils.semantic_const import CLASS_LABELS_200, VALID_CLASS_IDS_200
         CLASS_LABELS = CLASS_LABELS_200
         VALID_CLASS_IDS = VALID_CLASS_IDS_200
     elif task == 'Scannet20':
-        from scripts.utils.semantic_const import CLASS_LABELS_20, VALID_CLASS_IDS_20
+        from .utils.semantic_const import CLASS_LABELS_20, VALID_CLASS_IDS_20
         CLASS_LABELS = CLASS_LABELS_20
         VALID_CLASS_IDS = VALID_CLASS_IDS_20
     else:

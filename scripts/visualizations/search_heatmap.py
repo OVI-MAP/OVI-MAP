@@ -63,13 +63,13 @@ def main(args):
     pred_inst_mesh_f = glob.glob(
         pjoin(result_folder, 'instance_map_gt_*.ply'))[0]
 
-    f_cnt = os.path.basename(pred_inst_mesh_f)[16:-4]
-    view_select = 'top-8' # 'top-8' | 'raycast'
-    inst_sem_feat_name =  f'inst_sem_{vl_model_name}_{f_cnt}_{view_select}.pkl'
-    # =====================================================
+    # ======================= TODO =============================
+    frame_cnt = os.path.basename(pred_inst_mesh_f)[16:-4]
+    view_select = 'incre_combine'
+    inst_sem_feat_name =  f'inst_sem_{vl_model_name}_{frame_cnt}_{view_select}.pkl'
     with open(pjoin(result_folder,inst_sem_feat_name), 'rb') as f:
         inst_sem_dict = pickle.load(f)    
-
+    # ==========================================================
     
 
     pred_ply = PlyData.read(pred_inst_mesh_f)

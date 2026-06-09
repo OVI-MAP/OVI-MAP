@@ -27,6 +27,7 @@
 
 #vscode 
 **/.vscode
+CLAUDE.md
 
 *.pt
 
