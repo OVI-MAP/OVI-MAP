@@ -307,7 +307,7 @@ def main(args):
     select_by_viewcov = False
     select_combine = True
 
-    # incre_vis | 
+    # TODO the final pkl file stores the instance semantic features for each instance, including the features, poses, 2D bbox, and visibility scores
     inst_sem_name = f'inst_sem_{VLM_name}_{int(np.ceil((end-start)/step))}_incre_combine.pkl'
 
     # ==========================================================
@@ -376,10 +376,9 @@ def main(args):
         valid_d_mask = (depth_scaled > 0.0) & (depth_scaled < ray_cast_max_depth)
         
 
-        # NOTE use instance segs from cropformer
-        inst_seg_f = pjoin(temp_pano_folder, 'cropformer', 
-            os.path.basename(data_loader.rgb_path_map[f_i]).split('.')[0] + '.png'
-        )
+        # TODO use instance segs from cropformer
+        inst_seg_f = pjoin(temp_pano_folder, 
+            os.path.basename(data_loader.rgb_path_map[f_i]).split('.')[0] + '.png')
         inst_seg = cv2.imread(inst_seg_f, cv2.IMREAD_UNCHANGED)
         if data_loader.mapRGBtoDepth is not None:
             inst_seg = data_loader.mapRGBtoDepth(inst_seg)

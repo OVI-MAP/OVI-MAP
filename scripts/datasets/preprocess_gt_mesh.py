@@ -9,14 +9,19 @@ import open3d.core as o3c # type: ignore
 from scripts.utils.mesh_postprocess_utils import write_ply_with_labels
 from scripts.visualizations.vis_utils import get_new_pallete
 
-def convert_replica_sem_inst_mesh(data_folder, scene_num, res_folder):
+
+def convert_replica_sem_inst_mesh(data_folder, scene_num, res_folder,
+                                   gt_sem_folder=None, gt_inst_folder=None):
     from ..utils.semantic_const import Replica_map_to_reduced, REPLICA_52_PALETTE
 
-    gt_sem_list_f = pjoin('/home/zilong/Disk_data/replica_gt_semantics', 
-        f'semantic_labels_{scene_num}.txt')
+    if gt_sem_folder is None:
+        gt_sem_folder = pjoin(data_folder, '..', 'replica_gt_semantics')
+    if gt_inst_folder is None:
+        gt_inst_folder = pjoin(data_folder, '..', 'replica_gt_instances')
+
+    gt_sem_list_f = pjoin(gt_sem_folder, f'semantic_labels_{scene_num}.txt')
     gt_sem_list = np.loadtxt(gt_sem_list_f, dtype=int)
-    gt_inst_list_f = pjoin('/home/zilong/Disk_data/replica_gt_instances',
-        f'instance_labels_{scene_num}.txt')
+    gt_inst_list_f = pjoin(gt_inst_folder, f'instance_labels_{scene_num}.txt')
     gt_inst_list = np.loadtxt(gt_inst_list_f, dtype=int)
     gt_mesh_f = pjoin(data_folder, '..', f'{scene_num}_mesh.ply')
 
@@ -77,6 +82,10 @@ def convert_scannet_mesh(data_folder, scene_num, res_folder, map_scannet200=True
         data_folder, f'{scene_num}_vh_clean_2.0.010000.segs.json')
     gt_inst_to_segs_f = pjoin(
         data_folder, f'{scene_num}.aggregation.json')
+    labels_table = pd.read_csv(
+        pjoin(data_folder, '..', 'scannetv2-labels.combined.tsv'), 
+        sep="\t"
+    )
 
     gt_sem_mesh = PlyData.read(gt_sem_mesh_f) # it's label in NYU40
     gt_inst_mesh = copy.deepcopy(gt_sem_mesh)
@@ -102,8 +111,6 @@ def convert_scannet_mesh(data_folder, scene_num, res_folder, map_scannet200=True
     inst_colors = np.ones((num_vertex, 3), dtype=np.uint8) * 200
     sem_labels = np.zeros(num_vertex, dtype=np.uint16)
     sem_colors = np.ones((num_vertex, 3), dtype=np.uint8) * 200
-
-    labels_table = pd.read_csv('/media/zilong/Documents/MasterProject/scannet_v2/scannetv2-labels.combined.tsv', sep="\t")
 
     for inst_i in gt_insts:
         inst_id = inst_i['objectId']
@@ -247,24 +254,29 @@ def main(args):
     # # for scannet
     # convert_scannet_mesh(scene_folder, scene_num, result_folder, map_scannet200=False)
     # for replica
-    convert_replica_sem_inst_mesh(scene_folder, scene_num, result_folder)
+    convert_replica_sem_inst_mesh(
+        scene_folder, scene_num, result_folder,
+        gt_sem_folder=args.gt_sem_folder,
+        gt_inst_folder=args.gt_inst_folder,
+    )
 
 
 
 def parse_args():
-    parse = argparse.ArgumentParser(description='Semantic Mapping-Python') 
+    parse = argparse.ArgumentParser(description='Semantic Mapping-Python')
     # files path
-    parse.add_argument("--scene_num", type=str, required=True, 
+    parse.add_argument("--scene_num", type=str, required=True,
         help="which scene to process, use 'all' for all scenes")
-    
-    parse.add_argument("--result_folder", type=str, 
-        default='/home/zilong/Disk_data/semantic_mapping_result', 
-        help="folder of mapping results")
-    # NOTE remember to change for different datasets
-    parse.add_argument("--data_folder", type=str, 
-        default='/media/zilong/Documents/MasterProject/Replica', 
-        help="which scene for mapping ")
-    
+
+    parse.add_argument("--data_folder", type=str, required=True,
+        help="path to the dataset folder (e.g., .../Replica)")
+    parse.add_argument("--result_folder", type=str, required=True,
+        help="path to the output folder for mapped GT meshes")
+    parse.add_argument("--gt_sem_folder", type=str, default=None,
+        help="path to Replica ground-truth semantic labels folder (default: <data_folder>/../replica_gt_semantics)")
+    parse.add_argument("--gt_inst_folder", type=str, default=None,
+        help="path to Replica ground-truth instance labels folder (default: <data_folder>/../replica_gt_instances)")
+
     return parse.parse_args()
 
 if __name__=="__main__":
