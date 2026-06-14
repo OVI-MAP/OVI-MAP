@@ -275,6 +275,7 @@ def main(args):
     logging.info(f"Running scene {scene_num} from frame {start} to frame {end-1} with step {step}.")
 
     num_threads = args.num_threads
+    num_frames = int(np.ceil((end-start)/step))
 
     # for scannet exp with limited observations
     # iters = 160
@@ -308,7 +309,20 @@ def main(args):
     select_combine = True
 
     # TODO the final pkl file stores the instance semantic features for each instance, including the features, poses, 2D bbox, and visibility scores
-    inst_sem_name = f'inst_sem_{VLM_name}_{int(np.ceil((end-start)/step))}_incre_combine.pkl'
+    inst_sem_name = f'inst_sem_{VLM_name}_{num_frames}_incre_combine.pkl'
+    inst_sem_f = pjoin(exp_results, inst_sem_name)
+
+    # 
+    ray_cast_max_depth = 50.0
+    # NOTE minimum visible area in the pano seg for an instance to be considered
+    vis_area_thres = 1000
+    # NOTE buffer size for each instance to store the features from different views
+    max_top_vis = 10
+    
+    if select_by_viewcov:
+        view_overlap_ratio_thres = 0.85
+    elif select_combine:
+        view_overlap_ratio_thres = 0.9
 
     # ==========================================================
 
@@ -340,14 +354,6 @@ def main(args):
     vl_model = VLModel(model_name=VLM_name, img_size=(H_depth, W_depth), device=DEVICE)
     logging.info(f"VL model {VLM_name} initialized!")
 
-    ray_cast_max_depth = 50.0
-    # minimum visible area in the pano seg for an instance to be considered
-    vis_area_thres = 1000
-    max_top_vis = 8
-    if select_by_viewcov:
-        view_overlap_ratio_thres = 0.85
-    elif select_combine:
-        view_overlap_ratio_thres = 0.9
 
     gsm_node.initializeCameraRayCaster(
         K_depth, H_depth, W_depth, 0.01, ray_cast_max_depth, num_threads
@@ -564,7 +570,7 @@ def main(args):
     logging.info("Start mesh generation!")
     # flags: label_mesh, sem_mesh, inst_mesh
     gsm_node.generateMesh(
-        exp_results, str(int(np.ceil((end-start)/step))), 
+        exp_results, str(num_frames), 
         False, False, True
     )
 
@@ -618,7 +624,6 @@ def main(args):
     gsm_node.outputLog(f"Totally {len(inst_sem_dict)} instances with {total_query} queries, avg {total_query / len(inst_sem_dict):.2f}.")
 
     # dump results
-    inst_sem_f = pjoin(exp_results, inst_sem_name)
     with open(inst_sem_f, 'wb') as f:
         pickle.dump(inst_sem_dict, f)
     logging.info(f"Saved instance semantic features to {inst_sem_f}")

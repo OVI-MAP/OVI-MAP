@@ -195,15 +195,14 @@ def main(args):
     map_to_gt_mesh = True
     use_canonical_phrase = True
 
-    show_mapping = False
-    remove_raw_recon = False # NOTE Attention !!!!!
+    print_match_res = False
     # ===========================================
 
     gt_inst_mesh_f = pjoin(result_folder, '..', 'gt_instance_mesh.ply')
     pred_inst_mesh_f = sorted(glob.glob(pjoin(result_folder, 'instance_mesh_*.ply')))[0]
     
     # if output_mask_file:
-    #     mask_out_dir = '/home/zilong/Disk_data/Mask3D/ours_masks'
+    #     mask_out_dir = '../Mask3D/ours_masks'
     #     os.makedirs(mask_out_dir, exist_ok=True)
     #     mask_save_f = pjoin(mask_out_dir, f'{scene_num}_masks.pt') 
 
@@ -298,7 +297,7 @@ def main(args):
             'class_id': real_sem_id, 
             'class_name': text_words[match_idx],
         }
-        if show_mapping:
+        if print_match_res:
             print(f"Instance-{glo_inst_id}  matched  {real_sem_id}-{text_words[match_idx]}")
 
     # ####################### Load the instance mesh #######################
@@ -376,9 +375,6 @@ def main(args):
             map_vertices.numpy(), map_inst_c,  map_inst_id, 
             triangle_indices
         )
-
-    if remove_raw_recon:
-        os.remove(pred_inst_mesh_f)
 
 
 
