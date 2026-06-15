@@ -257,3 +257,15 @@ wget https://raw.githubusercontent.com/opencv/opencv_3rdparty/fccf7cd6a4b12079f7
 wget https://raw.githubusercontent.com/opencv/opencv_3rdparty/fccf7cd6a4b12079f73bbfb21745f9babcd4eb1d/vgg_generated_80.i
 wget https://raw.githubusercontent.com/opencv/opencv_3rdparty/fccf7cd6a4b12079f73bbfb21745f9babcd4eb1d/vgg_generated_120.i
 ```
+
+### CropFormer related
+
+#### a)
+If you are using the latest version of pytorch (PyTorch 2.7 for instance), you might need to edit two lines of **CropFormer/mask2former/modeling/pixel_decoder/ops/src/cuda/ms_deform_attn_cuda.cu** to install it.
+
+line  69: AT_DISPATCH_FLOATING_TYPES(value.**scalar_**type(), "ms_deform_attn_forward_cuda", ([&] {
+line 139: AT_DISPATCH_FLOATING_TYPES(value.**scalar_**type(), "ms_deform_attn_backward_cuda", ([&] {
+
+#### b)
+Comment out **CropFormer/mask2former/data/datasets/__init__.py** to skip the installation of mmcv.
+
