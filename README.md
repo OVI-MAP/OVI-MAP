@@ -1,5 +1,5 @@
 <p align="center">
-  <h1 align="center">OVI-MAP: Open-Vocabulary Instance-Semantic Mapping</h1>
+  <h1 align="center">🗺️🔍 OVI-MAP: Open-Vocabulary Instance-Semantic Mapping</h1>
   <h2 align="center">CVPR 2026 Highlight✨</h2>
   <p align="center">
     <a href="https://dzl666.github.io/">Zilong Deng</a><sup>1,3</sup>,
@@ -19,6 +19,11 @@
     <a href="https://arxiv.org/abs/2603.26541">Paper</a> | <a href="https://ovi-map.github.io/">Project Page</a> | <a href="https://cvpr.thecvf.com/virtual/2026/poster/39644">Poster & Video</a>
   </h3>
   <div align="center"></div>
+</p>
+
+<p align="center">
+  <img src="cover.png" alt="OVI-MAP cover" width="250" hspace="10">
+  <img src="cover2.png" alt="OVI-MAP cover 2" width="350" hspace="10">
 </p>
 
 This is the official implementation of the CVPR2026 paper **OVI-MAP**.
@@ -41,12 +46,12 @@ This is the official implementation of the CVPR2026 paper **OVI-MAP**.
 - [x] Before 2026/06/01: V0.9, Bug fixing and cleaning the codebase.
 - [ ] Before 2026/07/01: Release the refactored codebase for easier installation and deployment.
 
-## Installation (Ubuntu 22.04 as an example)
+## Installation (e.g.: Ubuntu 22.04)
 
 ### Download the Repo
 
 ```bash
-git clone --recurse-submodules
+git clone --recurse-submodules https://github.com/OVI-MAP/OVI-MAP.git
 ```
 
 ### ROS Env. (Skip this if you have it)
@@ -138,7 +143,6 @@ python -m scripts.datasets.preprocess_gt_mesh --scene_num office0
 ### Source the environment
 
 ```bash
-cd semantic_mapping
 source mapping_ros_ws/devel/setup.bash
 ```
 
@@ -261,11 +265,16 @@ wget https://raw.githubusercontent.com/opencv/opencv_3rdparty/fccf7cd6a4b12079f7
 ### CropFormer related
 
 #### a)
-If you are using the latest version of pytorch (PyTorch 2.7 for instance), you might need to edit two lines of **CropFormer/mask2former/modeling/pixel_decoder/ops/src/cuda/ms_deform_attn_cuda.cu** to install it.
 
-line  69: AT_DISPATCH_FLOATING_TYPES(value.**scalar_**type(), "ms_deform_attn_forward_cuda", ([&] {
-line 139: AT_DISPATCH_FLOATING_TYPES(value.**scalar_**type(), "ms_deform_attn_backward_cuda", ([&] {
+If you are using the latest version of pytorch (PyTorch 2.7 for instance), you might need to edit two lines of **CropFormer/mask2former/modeling/pixel_decoder/ops/src/cuda/ms_deform_attn_cuda.cu** to install it. 
+
+> Adding two 'scalar_' prefix:
+>
+> line  69: AT_DISPATCH_FLOATING_TYPES(value.**scalar_**type(), "ms_deform_attn_forward_cuda", ([&] {
+>
+> line 139: AT_DISPATCH_FLOATING_TYPES(value.**scalar_**type(), "ms_deform_attn_backward_cuda", ([&] {
 
 #### b)
+
 Comment out **CropFormer/mask2former/data/datasets/__init__.py** to skip the installation of mmcv.
 
