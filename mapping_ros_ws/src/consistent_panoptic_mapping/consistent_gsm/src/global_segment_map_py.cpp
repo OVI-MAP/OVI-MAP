@@ -339,7 +339,7 @@ bool GlobalSegmentMap_py::integrateFrame()
     bool whether_merge_alias = false;
     LOG(INFO) << "Integrating frame n." << ++integrated_frames_count_;
     int curMem = getValue()-systemMem_;
-    LOG(INFO) << "  Memory usage before integrateFrame: " << curMem << " KB | " << curMem / 1024.0 << " MB";
+    // LOG(INFO) << "  Memory usage before integrateFrame: " << curMem << " KB | " << curMem / 1024.0 << " MB";
 
     auto time_start = std::chrono::system_clock::now();
 

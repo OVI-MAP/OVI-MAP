@@ -1,17 +1,9 @@
-import os, sys, time, argparse, pickle, logging
 from os.path import join as pjoin
-from tqdm import tqdm
-
 
 import cv2, copy
 from PIL import Image
 import numpy as np
 import torch
-
-# image embedding
-import clip
-from transformers import AutoProcessor, AutoModel
-
 
 clip_model_list = {
     'clip-ViT-B-32':         'ViT-B/32', 
@@ -39,17 +31,22 @@ siglip_model_list = {
 
 
 class VLModel:
-    def __init__(self, model_name, img_size, device):
+    def __init__(self, model_name, img_size=(480, 640), device='cuda', precision='fp16'):
         self.device = device
+        self.precision = precision
 
         # NOTE CLIP and SigLip use PIL.Image in RGB format as input
         if model_name in clip_model_list.keys():
+            import clip
             self.model_type = 'clip'
             self.clip_model, self.prep_clip = clip.load(clip_model_list[model_name], device=device)
         elif model_name in siglip_model_list.keys():
+            from transformers import AutoProcessor, AutoModel
             self.model_type = 'siglip'
+            torch_dtype = torch.float16 if self.precision == 'fp16' else torch.float32
             self.siglip_model = AutoModel.from_pretrained(
-                siglip_model_list[model_name], device_map="cuda"
+                siglip_model_list[model_name], device_map="cuda",
+                torch_dtype=torch_dtype
             ).eval().to(device)
             self.processor = AutoProcessor.from_pretrained(siglip_model_list[model_name], use_fast=True)
         else:
@@ -91,7 +88,9 @@ class VLModel:
             imgs = torch.stack(batch_img_roi).to(self.device)
             roi_feat = self.clip_model.encode_image(imgs)
         elif self.model_type == 'siglip':
-            img_inputs = self.processor(images=batch_img_roi, return_tensors="pt").to(device=self.device)
+            dtype = torch.float16 if self.precision == 'fp16' else torch.float32
+            img_inputs = self.processor(images=batch_img_roi, return_tensors="pt")
+            img_inputs = {k: v.to(device=self.device, dtype=dtype) for k, v in img_inputs.items()}
             roi_feat = self.siglip_model.get_image_features(**img_inputs)
 
         roi_feat = roi_feat / roi_feat.norm(dim=-1, keepdim=True)

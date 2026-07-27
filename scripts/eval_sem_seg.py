@@ -192,7 +192,7 @@ def parse_args():
     parse = argparse.ArgumentParser(description='Semantic Mapping-Python') 
     
     parse.add_argument("--result_folder", type=str, 
-        default='/home/zilong/Disk_data/semantic_mapping_result', 
+        default='/data/semantic_mapping_result', 
         help="folder of mapping results")
     
     return parse.parse_args()
@@ -232,10 +232,10 @@ def main(args):
         print(f'Processing scene: {scene_num}')
         # cropformer_inst
         seq_folder = pjoin(result_folder, scene_num, 'cropformer_inst')
-        eval_folder = pjoin(seq_folder, 'eval')
+        eval_folder = pjoin(seq_folder, 'eval_semantics')
 
         res_f = os.path.join(result_folder, 
-            "results_replica.json")
+            "results_eval_semantics_replica.json")
 
         if not os.path.exists(eval_folder):
             os.makedirs(eval_folder, exist_ok=True)

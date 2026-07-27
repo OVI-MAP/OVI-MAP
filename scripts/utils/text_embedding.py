@@ -1,10 +1,6 @@
 import os, time, argparse, logging, pickle
 import numpy as np
 import torch
-import matplotlib.pyplot as plt
-
-import clip
-from transformers import AutoModel, AutoTokenizer
 
 FORMAT = '%(asctime)s.%(msecs)06d %(levelname)-8s: [%(filename)s] %(message)s'
 logging.basicConfig(level=logging.INFO, format=FORMAT, datefmt='%H:%M:%S')
@@ -47,9 +43,11 @@ class TextEmbedder:
 
     def load_model(self, model_name, device):
         if model_name in clip_model_list.keys():
+            import clip
             self.model_type = 'clip'
             self.clip_model, _ = clip.load(clip_model_list[model_name], device=device)
         elif model_name in siglip_model_list.keys():
+            from transformers import AutoModel, AutoTokenizer
             self.model_type = 'siglip'
             self.siglip_model = AutoModel.from_pretrained(siglip_model_list[model_name]).eval().to(device)
             self.tokenizer = AutoTokenizer.from_pretrained(siglip_model_list[model_name])
