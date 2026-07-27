@@ -1,32 +1,34 @@
-<p align="center">
-  <h1 align="center">🗺️🔍 OVI-MAP: Open-Vocabulary Instance-Semantic Mapping</h1>
-  <h2 align="center">CVPR 2026 Highlight✨</h2>
-  <p align="center">
-    <a href="https://dzl666.github.io/">Zilong Deng</a><sup>1,3</sup>,
-    <a href="https://scholar.google.de/citations?user=TFsE4BIAAAAJ">Federico Tombari</a><sup>2,4</sup>,
-    <a href="https://people.inf.ethz.ch/pomarc/">Marc Pollefeys</a><sup>1,5</sup>,
-    <a href="https://scholar.google.com/citations?user=dfjN3YAAAAAJ">Johanna Wald</a><sup>2,*</sup>,
-    <a href="https://scholar.google.com/citations?user=U9-D8DYAAAAJ">Daniel Barath</a><sup>1,2,*</sup>
-    <br>
-    <sup>1</sup>ETH Zurich&emsp;
-    <sup>2</sup>Google&emsp;
-    <sup>3</sup>University of Zurich&emsp;
-    <sup>4</sup>TU Munich&emsp;
-    <sup>5</sup>Microsoft&emsp;
-    <sup>*</sup>Equal contribution
-  </p>
-  <h3 align="center">
-    <a href="https://arxiv.org/abs/2603.26541">Paper</a> | <a href="https://ovi-map.github.io/">Project Page</a> | <a href="https://cvpr.thecvf.com/virtual/2026/poster/39644">Poster & Video</a>
-  </h3>
-  <div align="center"></div>
-</p>
+<!-- markdownlint-disable MD033 MD041 -->
+<div align="center">
 
-<p align="center">
-  <img src="cover.png" alt="OVI-MAP cover" width="250" hspace="10">
-  <img src="cover2.png" alt="OVI-MAP cover 2" width="350" hspace="10">
-</p>
+# 🗺️🔍 OVI-MAP: Open-Vocabulary Instance-Semantic Mapping
+
+## CVPR 2026 Highlight✨
+
+<a href="https://dzl666.github.io/">Zilong Deng</a><sup>1,3</sup>,
+<a href="https://scholar.google.de/citations?user=TFsE4BIAAAAJ">Federico Tombari</a><sup>2,4</sup>,
+<a href="https://people.inf.ethz.ch/pomarc/">Marc Pollefeys</a><sup>1,5</sup>,
+<a href="https://scholar.google.com/citations?user=dfjN3YAAAAAJ">Johanna Wald</a><sup>2,\*</sup>,
+<a href="https://scholar.google.com/citations?user=U9-D8DYAAAAJ">Daniel Barath</a><sup>1,2,\*</sup>
+<br>
+<sup>1</sup>ETH Zurich&emsp;
+<sup>2</sup>Google&emsp;
+<sup>3</sup>University of Zurich&emsp;
+<sup>4</sup>TU Munich&emsp;
+<sup>5</sup>Microsoft&emsp;
+<sup>\*</sup>Equal contribution
+
+### <a href="https://arxiv.org/abs/2603.26541">Paper</a> | <a href="https://ovi-map.github.io/">Project Page</a> | <a href="https://cvpr.thecvf.com/virtual/2026/poster/39644">Poster & Video</a>
+
+</div>
+
+<div align="center">
+  <img src="cover.png" alt="OVI-MAP cover" width="250">
+  <img src="cover2.png" alt="OVI-MAP cover 2" width="350">
+</div>
 
 This is the official implementation of the CVPR2026 paper **OVI-MAP**.
+Contact: deng_zilong[at]outlook.com
 
 ### BibTex
 
@@ -40,21 +42,78 @@ This is the official implementation of the CVPR2026 paper **OVI-MAP**.
 }
 </code></pre>
 
+## Table of Contents
+
+- [Installation](#installation)
+  - [Option A: Docker (Recommended)](#option-a-docker-environment-recommended)
+  - [Option B: Local Environment](#option-b-local-environment-for-ubuntu-2004)
+- [Dataset](#dataset)
+- [How to Use It](#how-to-use-it)
+- [Acknowledgements](#acknowledgements)
+- [FAQ / Bug fixing](#faq--bug-fixing)
+
 ### Timeline
 
 - [x] 2026/05/13: Release original code & interactive visualization tools (there might be some bugs for a fresh start. I am still working on it, thanks for your patience :))
-- [x] Before 2026/06/01: V0.9, Bug fixing and cleaning the codebase.
-- [ ] Before 2026/07/01: Release the refactored codebase for easier installation and deployment.
+- [x] 2026/06/01: V0.9, Bug fixing and cleaning the codebase.
+- [x] 2026/07/27: We release the refactored codebase for easier installation and deployment！Check out the branch **origin_impl** for the original code.
 
-## Installation (e.g.: Ubuntu 22.04)
+## Installation
 
 ### Download the Repo
 
 ```bash
-git clone --recurse-submodules https://github.com/OVI-MAP/OVI-MAP.git
+git clone https://github.com/OVI-MAP/OVI-MAP.git
 ```
 
-### ROS Env. (Skip this if you have it)
+### [Option A] Docker Environment (Recommended)
+
+If you are on Ubuntu 22.04+ (or any system without native ROS Noetic support), use Docker:
+
+- [Docker](https://docs.docker.com/engine/install/ubuntu/)
+- [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) (for GPU support)
+
+#### Two conda environments inside the container
+
+| Environment               | Python | Purpose                                        |
+|---------------------------|--------|------------------------------------------------|
+| `ovimap-py38`             | 3.8    | Reconstruction + ROS pybind11 modules          |
+| `ovimap-perception-py310` | 3.10   | Perception (Cropformer/SigLIP/CLIP inference)  |
+
+The async pipeline spawns the perception worker as a subprocess using
+`/opt/conda/envs/ovimap-perception-py310/bin/python`, communicating via shared memory + pipes
+inside the same container.
+
+#### Build the image
+
+```bash
+# Modify line 75 of docker/Dockerfile to pick your torch.
+bash docker/build.sh
+```
+
+First build takes ~20 minutes (installs ROS, conda envs, Python packages). The image is ~25 GB.
+
+#### Run and attach to the container
+
+This mounts the repo root at `/workspace` and `~/Data` at `/data`.
+
+```bash
+# Set `DATA_DIR` to override
+DATA_DIR=/path/to/your/datasets bash docker/run.sh
+```
+
+#### ROS workspace installation (inside the container)
+
+This runs `catkin build consistent_gsm depth_segmentation_py`.
+The ROS workspace is built with system Python.
+
+```bash
+bash docker/setup_workspace.sh
+```
+
+### [Option B] Local Environment (for Ubuntu 20.04)
+
+#### Install ROS (required by the backend with voxblox)
 
 ```bash
 sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
@@ -63,40 +122,54 @@ sudo apt install curl
 curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add -
 sudo apt update
 
-sudo apt install ros-noetic-desktop-full
+sudo apt install ros-noetic-desktop
 ```
 
-### Dependencies
+#### Dependencies
 
 ```bash
-sudo apt install python3-dev python3-pip python3-wstool protobuf-compiler dh-autoreconf python3-catkin-tools python3-osrf-pycommon
+sudo apt install python3-dev python3-pip python3-wstool protobuf-compiler dh-autoreconf \
+    python3-catkin-tools python3-osrf-pycommon python3-empy \
+    libflann-dev libgl1-mesa-dev libvtk7-dev pybind11-dev libgflags-dev libgoogle-glog-dev
 ```
 
-### Conda Environment
+#### Conda Environments
 
-Python 3.8 (required for ROS-noetic support)
+> You need two separate conda environments: one for reconstruction (Python 3.8, used with ROS)
+> and one for perception (Python 3.10, used for VLM inference).
+>
+> If you don't need to run with SigLip2, you can use only one python 3.8 env.
+
+**ovimap-py38** — Python 3.8, reconstruction scripts + ROS pybind11 modules:
 
 ```bash
-conda create -n ovi-map python==3.8.10
-conda install pytorch==2.1.1 torchvision==0.16.1 pytorch-cuda=12.1 -c pytorch -c nvidia
+conda create -n ovimap-py38 python=3.8.10
+conda activate ovimap-py38
+python -m pip install empy==3.3.4 pyparsing\<3 pybind11 tqdm open3d scipy \
+    opencv-contrib-python==4.11.\* plyfile h5py matplotlib
+conda deactivate
 ```
 
-### Python Packages
+**ovimap-perception-py310** — Python 3.10, perception worker (SigLIP/CLIP):
 
 ```bash
-python -m pip install catkin_pkg rospkg rosdep rosinstall rosinstall-generator wstool
-python -m pip install empy==3.3.4 pybind11 tqdm open3d scipy opencv-contrib-python==4.11.* plyfile h5py transformers==4.49.* accelerate==0.26.* sentencepiece protobuf
-python -m pip install ftfy regex git+https://github.com/openai/CLIP.git
+conda create -n ovimap-perception-py310 python=3.10
+conda activate ovimap-perception-py310
+# Pick your torch
+python -m pip install --index-url https://download.pytorch.org/whl/cu128 \
+    torch==2.7.1 torchvision==0.22.1
+python -m pip install transformers==4.49.\* opencv-python-headless==4.11.\* Pillow tqdm \
+    ftfy regex accelerate\>=0.26 sentencepiece protobuf setuptools open3d plyfile
+conda deactivate
 ```
 
-### Install Third Party Packages
+#### Install Third Party Packages
 
 ```bash
-export ROS_VERSION=noetic
 cd mapping_ros_ws
 catkin init
-catkin config --extend /opt/ros/$ROS_VERSION --merge-devel
-catkin config --cmake-args -DCMAKE_CXX_STANDARD=14 -DCMAKE_BUILD_TYPE=Release
+catkin config --extend /opt/ros/noetic --merge-devel
+catkin config --cmake-args -DCMAKE_CXX_STANDARD=14 -DCMAKE_BUILD_TYPE=Release -DPYTHON_EXECUTABLE=/usr/bin/python3
 wstool init src
 
 cd src
@@ -104,9 +177,13 @@ wstool merge -t . consistent_panoptic_mapping/consistent_panoptic_mapping.rosins
 wstool update
 ```
 
-### Build the Environment
+#### Build the Environment
+
+The ROS workspace is built with **system Python**, not conda. Make sure you are
+**not** inside any conda environment when building:
 
 ```bash
+conda deactivate
 cd mapping_ros_ws/src
 catkin build consistent_gsm depth_segmentation_py
 ```
@@ -139,12 +216,6 @@ python -m scripts.datasets.preprocess_gt_mesh --scene_num office0
 ```
 
 ## How to Use It
-
-### Source the environment
-
-```bash
-source mapping_ros_ws/devel/setup.bash
-```
 
 ### Run CropFormer
 
@@ -187,19 +258,43 @@ Group all of the RGB segmentation results by the name of the scene, and place th
       └──[SceneName]/
 ```
 
-> MAKE SURE YOU ARE SAVING THE MASKS AS PNG FILES!!!!!
+> MAKE SURE YOU ARE SAVING THE MASKS AS **PNG** FILES!!!!!
 
 The file name of the segmentation masks should match the name of the original RGB image, otherwise please adapt the mask loading code in **scripts/panoptic_mapping_.py**.
 
-### Run the main pipeline
-
-Use our default settings to run the mapping:
+### Run the pipeline
 
 ```bash
-bash scripts/run_replica_all.sh
+# 
+conda activate ovimap-py38
+# source the ros env to find the compiled backend
+source mapping_ros_ws/devel/setup.bash
+
+# Async pipeline (reconstruction + perception worker)
+bash scripts/run_async.sh office0
+
+# Or manually
+python scripts/panoptic_mapping_.py \
+    --dataset replica --task Nyu40 \
+    --scene_num office0 \
+    --data_folder /data/Datasets/Replica \
+    --start 0 --end 2000 --step 10 \
+    --data_association 2 --inst_association 4 --seg_graph_confidence 3 \
+    --temp_panoptics_folder /data/sem_seg_temp/office0 \
+    --save_temp_geometrics --temp_geometrics_folder /data/geo_seg_temp/office0 \
+    --result_folder /data/semantic_mapping_result/office0 \
+    --perception_python /opt/conda/envs/ovimap-perception-py310/bin/python \
+    --perception_worker scripts/perception_worker.py \
+    ...
 ```
 
 ### Run Post-Processing
+
+You would need to switch to your python 3.10 environment from here, in order to use torch.
+
+```bash
+conda deactivate && conda activate ovimap-perception-py310
+```
 
 #### [Step 1] Map the generated instance mesh and per-instance semantics to the GT mesh and the dataset's labels
 
@@ -266,7 +361,7 @@ wget https://raw.githubusercontent.com/opencv/opencv_3rdparty/fccf7cd6a4b12079f7
 
 #### a)
 
-If you are using the latest version of pytorch (PyTorch 2.7 for instance), you might need to edit two lines of **CropFormer/mask2former/modeling/pixel_decoder/ops/src/cuda/ms_deform_attn_cuda.cu** to install it. 
+If you are using the latest version of pytorch (PyTorch 2.7 for instance), you might need to edit two lines of **CropFormer/mask2former/modeling/pixel_decoder/ops/src/cuda/ms_deform_attn_cuda.cu** to install it.
 
 > Adding two 'scalar_' prefix:
 >
@@ -276,5 +371,4 @@ If you are using the latest version of pytorch (PyTorch 2.7 for instance), you m
 
 #### b)
 
-Comment out **CropFormer/mask2former/data/datasets/__init__.py** to skip the installation of mmcv.
-
+Comment out **CropFormer/mask2former/data/datasets/**init**.py** to skip the installation of mmcv.

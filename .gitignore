@@ -8,6 +8,8 @@
 
 # vscode
 **/.vscode
+**/.claude
+CLAUDE.md
 
 # python
 **/__pycache__
@@ -24,11 +26,6 @@
 
 # checkpoints 
 **/checkpoints
-
-#vscode 
-**/.vscode
-CLAUDE.md
-
 *.pt
 
 

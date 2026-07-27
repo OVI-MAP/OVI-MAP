@@ -6,14 +6,8 @@ import torch
 import open3d as o3d
 import open3d.core as o3c # type: ignore
 
-from scipy.spatial.transform import Rotation as R
-
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
-
 from plyfile import PlyData, PlyElement
 from ..visualizations.vis_utils import get_new_pallete
-from .text_embedding import TextEmbedder
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -167,7 +161,7 @@ def parse_args():
         help="which scene to process, use 'all' for all scenes")
     
     parse.add_argument("--result_folder", type=str, 
-        default='/home/zilong/Disk_data/semantic_mapping_result', 
+        default='/data/semantic_mapping_result', 
         help="folder of mapping results")
     
     return parse.parse_args()
@@ -230,13 +224,14 @@ def main(args):
     # plt.savefig(pjoin(result_folder, f'color_map_{task}.png'))
     # plt.close()
 
+    from .text_embedding import TextEmbedder
     text_embedder = TextEmbedder(VLM_name, device=DEVICE)
     if use_canonical_phrase:
         text_embeds_canon = text_embedder.get_canonical_text_embed()
 
     load_text_embeds = False
     if load_text_embeds:
-        text_embed_dir = '/home/zilong/Disk_data/semantic_mapping_result'
+        text_embed_dir = '/data/semantic_mapping_result'
         text_embeds_f = pjoin(text_embed_dir, f'{VLM_name}_{text_prompt}.pkl')
         with open(text_embeds_f, 'rb') as f:
             feat_cand_list = pickle.load(f)

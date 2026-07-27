@@ -1,9 +1,6 @@
 import os, sys, time, h5py
 import numpy as np
-import cv2
 import open3d as o3d
-
-import matplotlib.pyplot as plt
 
 def class_id_to_one_hot(class_id, num_classes=41):
     one_hot = np.zeros(num_classes, dtype=np.float32)

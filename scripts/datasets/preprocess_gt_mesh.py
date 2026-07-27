@@ -250,6 +250,7 @@ def main(args):
 
     result_folder = args.result_folder
     result_folder = pjoin(result_folder, scene_num)
+    os.makedirs(result_folder, exist_ok=True)
 
     # # for scannet
     # convert_scannet_mesh(scene_folder, scene_num, result_folder, map_scannet200=False)
@@ -278,6 +279,8 @@ def parse_args():
         help="path to Replica ground-truth instance labels folder (default: <data_folder>/../replica_gt_instances)")
 
     return parse.parse_args()
+
+# python -m scripts.datasets.preprocess_gt_mesh --scene_num all --data_folder /data/Datasets/Replica --result_folder /data/semantic_mapping_result --gt_sem_folder /workspace/scripts/datasets/replica_gt_semantics --gt_inst_folder /workspace/scripts/datasets/replica_gt_instances
 
 if __name__=="__main__":
     # set files path

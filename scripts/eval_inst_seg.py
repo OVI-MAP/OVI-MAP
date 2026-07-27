@@ -172,13 +172,10 @@ def parse_args():
         help="which scene for mapping ")
     
     parse.add_argument("--result_folder", type=str, 
-        default='/home/zilong/Disk_data/semantic_mapping_result', 
+        default='/data/semantic_mapping_result', 
         help="folder of mapping results")
 
     return parse.parse_args()
-
-
-# python -m scripts.eval_inst_seg --scene_num office0
 
 
 def main(args):
@@ -196,7 +193,7 @@ def main(args):
 
     assign_pred_inst_to_gt_inst(gt_inst_mesh_f, pred_inst_mesh_f, result_folder)
 
-
+# python -m scripts.eval_inst_seg --scene_num office0
 
 if __name__=="__main__":
     args = parse_args()

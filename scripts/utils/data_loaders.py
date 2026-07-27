@@ -1,6 +1,5 @@
 import os, copy, glob, json
 from os.path import join as pjoin
-import pandas as pd
 import numpy as np
 from scipy.spatial.transform import Slerp, Rotation
 import cv2

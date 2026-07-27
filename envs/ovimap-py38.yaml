@@ -1,0 +1,17 @@
+name: ovimap-py38
+channels:
+  - defaults
+dependencies:
+  - python=3.8.10
+  - numpy
+  - pip
+  - pip:
+    - pyparsing<3
+    - pybind11
+    - tqdm
+    - open3d
+    - scipy
+    - opencv-contrib-python==4.11.*
+    - plyfile
+    - h5py
+    - matplotlib
